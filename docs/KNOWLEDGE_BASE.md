@@ -16,13 +16,13 @@ How the docs in this repo are laid out, checked and kept true. The principles be
 | [ARCHITECTURE.md](../ARCHITECTURE.md) | Code map, layers and invariants | Hand |
 | `docs/*.md` | One doc per cross-cutting topic: style, testing, security, plans, agent tools | Hand |
 | [docs/design-docs/](design-docs/index.md) | Technical decisions, listed in the folder's index | Hand |
+| [docs/product-specs/](product-specs/index.md) | What users see and what the app accepts, such as the bag JSON contract, listed in the folder's index | Hand |
 | [docs/exec-plans/](PLANS.md) | Active and completed exec plans, and the tech-debt tracker | Hand, as the work happens |
 | `.claude/skills/` | Procedures Claude Code loads on demand ([AGENT_TOOLS.md](AGENT_TOOLS.md)) | Hand |
 | `docs/scratch/` | Local notes; git ignores it | Anyone; never committed |
 
 ## Growing the docs
 Add a doc when a topic needs rules that more than one change will rely on, not before. Common next docs:
-- `docs/product-specs/` with an `index.md`, once there is user-facing behavior to pin down. The doc checks enforce its index like the design docs'.
 - `docs/RELIABILITY.md` (errors, timeouts, logging), `docs/FRONTEND.md` and `docs/DESIGN.md` (UI), once that code exists.
 - `docs/references/` for a library's llms.txt or similar, copied from the source and not edited, when the library is newer than the models' training data.
 - `docs/generated/` for reference that scripts produce, such as a database schema. Never edit it by hand.
