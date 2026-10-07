@@ -1,0 +1,4 @@
+# LF everywhere, so shell hooks run on every OS and the checks compare the same bytes on every machine.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf

@@ -1,0 +1,16 @@
+# Secret scanning for CI and the pre-commit hook (docs/SECURITY.md). Extends gitleaks' default rules with one
+# that finds home-folder paths, which reveal a developer's machine. Slashes are escaped so this file never
+# matches its own rule or the tracked-files check. Add a rule here for each secret format the project uses.
+[extend]
+useDefault = true
+
+[[rules]]
+id = "home-folder-path"
+description = "Absolute path into a home folder, which reveals the machine and its user"
+regex = '''(?i)(?:\b[a-z]:(?:\\\\|\\|\/)users(?:\\\\|\\|\/)[^\\\/\s'"`]+|\/[a-z]\/users\/[^\/\s'"`]+\/|(?:^|[\s'"`=])\/(?:users|home)\/[^\/\s'"`]+\/)'''
+keywords = ["users", "home"]
+
+  # The node and runner accounts belong to Docker images and CI runners, not to anyone's machine.
+  [[rules.allowlists]]
+  regexTarget = "match"
+  regexes = ['''\/home\/(?:node|runner)\/''']

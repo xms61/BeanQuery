@@ -1,0 +1,30 @@
+# Dependencies and build output
+node_modules/
+dist/
+build/
+coverage/
+
+# Local settings and secrets: only .env.example is committed
+.env
+.env.*
+!.env.example
+
+# Local notes, never committed
+docs/scratch/
+
+# Local SQLite data, never committed
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+
+# Personal agent settings and agent worktrees
+.claude/settings.local.json
+.claude/worktrees/
+CLAUDE.local.md
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+*.log

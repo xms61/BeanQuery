@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(npm run verify)",
+      "Bash(npm run check:docs)",
+      "Bash(npm run check:files)",
+      "Bash(npm run check:files -- --staged)",
+      "Bash(npm run test:scripts)",
+      "Bash(npm run lint)",
+      "Bash(npm run typecheck)",
+      "Bash(npm test)",
+      "Bash(npx vitest run *)",
+      "Bash(node --test *)",
+      "Bash(git diff *)",
+      "Bash(git log *)"
+    ],
+    "ask": [
+      "Bash(npm install *)",
+      "Bash(npm i *)",
+      "Edit(.github/workflows/**)",
+      "Edit(.githooks/**)",
+      "Edit(.claude/**)",
+      "Edit(scripts/agent-hooks/**)"
+    ],
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(!.env.example)",
+      "Edit(.env)",
+      "Edit(.env.*)",
+      "Edit(!.env.example)",
+      "Read(*.pem)",
+      "Read(*.key)",
+      "Read(id_rsa*)",
+      "Read(id_ed25519*)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "network": {
+      "allowedDomains": ["github.com", "*.github.com", "registry.npmjs.org"]
+    }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PROJECT_DIR}/scripts/agent-hooks/guard-tool-use.mjs"],
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
