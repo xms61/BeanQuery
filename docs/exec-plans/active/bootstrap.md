@@ -1,13 +1,13 @@
 # Bootstrap the repository from the template
 
 ## Purpose
-Turn the template into this project's repository: the stack chosen and set up, `npm run verify` running the stack's checks locally and in CI, the docs describing this project instead of placeholders, and only the agents the team uses configured. Done when `npm run check:docs` reports no template placeholders and CI is green.
+Turn the template into this project's repository: the stack chosen and set up, `pnpm verify` running the stack's checks locally and in CI, the docs describing this project instead of placeholders, and only the agents the team uses configured. Done when `pnpm check:docs` reports no template placeholders and CI is green.
 
 ## Context
 - [AGENTS.md](../../../AGENTS.md): the commands table and boundaries to fill in.
 - [AGENT_TOOLS.md](../../AGENT_TOOLS.md): which agent reads which file, and how to remove one.
 - [ARCHITECTURE.md](../../../ARCHITECTURE.md), [CODE_STYLE.md](../../CODE_STYLE.md), [TESTING.md](../../TESTING.md), [SECURITY.md](../../SECURITY.md): the docs with `TODO(template)` placeholders.
-- `npm run check:docs` lists every placeholder left, by file and line.
+- `pnpm check:docs` lists every placeholder left, by file and line.
 
 ## Plan
 1. Interview the owner, one question at a time: what the project does and for whom; the stack and runtime; where it will run; which coding agents the team uses; whether AI review should run in CI. Record the answers in the Decision log.
@@ -32,15 +32,17 @@ Turn the template into this project's repository: the stack chosen and set up, `
 - 2026-10-07: No AI review in CI; `claude.yml` and `claude-review.yml` are deleted. Review runs locally through the `reviewer` subagent.
 - 2026-10-07: TypeScript on Node 24, with Biome for lint and format and Vitest for tests. `@types/node` is pinned to 24 to match the runtime.
 - 2026-10-07: Moved to Node 26, which reaches LTS this month, before any deployment. `@types/node` moves with it. On Node 26, `node:sqlite` no longer prints an experimental warning.
+- 2026-10-07: Switched from npm to pnpm 12 for its install safeguards: release-age delay, trust policy, blocked build scripts (see [SECURITY.md](../../SECURITY.md#dependencies)). The version is pinned in `packageManager`, because Node 25 and later no longer bundle corepack.
 - 2026-10-07: SQLite through the built-in `node:sqlite`, not DuckDB ([storage choice](../../design-docs/storage-choice.md)).
 - 2026-10-07: Will run as a web app on a Hetzner server. The web framework and deployment are left to their own exec plan.
 
 ## Surprises
 - 2026-10-07: Biome's recommended rules flagged the template scripts: three needed formatting and one `forEach` callback returned a value. Fixed in place; script tests still pass.
 - 2026-10-07: Vitest's default include pattern matches `scripts/*.test.mjs`, which use `node:test`. `vitest.config.ts` limits it to `src/`.
+- 2026-10-07: Moving to pnpm with a three-day `minimumReleaseAge` refused four packages npm had installed (vite 8.3.3, postcss, nanoid, magic-string), all published in the previous two days. The lockfile was resolved again under the policy.
 
 ## Validation
-`npm run verify` passes with the stack's checks included, `npm run check:docs` prints no placeholder warnings, and CI is green on the pull request that finishes this plan.
+`pnpm verify` passes with the stack's checks included, `pnpm check:docs` prints no placeholder warnings, and CI is green on the pull request that finishes this plan.
 
 ## Outcome
 Filled in when the plan moves to completed/.

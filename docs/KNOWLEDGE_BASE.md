@@ -47,7 +47,7 @@ last-verified: YYYY-MM-DD
 Set `last-verified` to today's UTC date (`date -u +%F`) whenever you check a doc against the code, including when a change makes you edit it.
 
 ## What the doc checks enforce
-`npm run check:docs` runs in `verify`, the pre-commit hook and CI, and fails on:
+`pnpm check:docs` runs in `verify`, the pre-commit hook and CI, and fails on:
 - a relative link to a file or folder that doesn't exist, in any Markdown file, skills and agent config included;
 - a doc that can't be reached by following links from AGENTS.md (exec plans, generated and reference files are exempt);
 - missing or invalid frontmatter, or a `last-verified` date more than a day ahead of UTC;

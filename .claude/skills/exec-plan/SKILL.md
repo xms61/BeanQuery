@@ -25,4 +25,4 @@ The rules and the template are in [docs/PLANS.md](../../../docs/PLANS.md); this 
 ## Finish
 1. Run the Validation commands and record the result.
 2. Fill in Outcome, move the file to `docs/exec-plans/completed/`, and update links to it.
-3. Run `npm run verify`.
+3. Run `pnpm verify`.

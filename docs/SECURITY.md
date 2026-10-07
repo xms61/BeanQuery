@@ -27,6 +27,8 @@ No agent runs in CI today. These rules apply if one is added.
 ## Dependencies
 - Ask before adding one. Check that the package exists, is maintained, and is the one you meant: models invent plausible package names, and attackers register them.
 - Lockfiles are committed and changed only by the package manager.
+- pnpm guards installs; its settings are in `pnpm-workspace.yaml`. It installs no version younger than three days (`minimumReleaseAge`), when most hijacked releases are caught and pulled. It refuses a version published with weaker trust than an earlier one (`trustPolicy`) and transitive dependencies from git or tarball URLs (`blockExoticSubdeps`). Dependency build scripts run only for packages listed under `allowBuilds`, and `strictDepBuilds` fails the install on any other. Add a package there only after reading what its script does.
+- When `minimumReleaseAge` refuses a package you need now, wait rather than lowering it. For an urgent security fix, exclude that one package with `minimumReleaseAgeExclude` and say why in the PR.
 - Dependabot keeps actions and packages current; review its PRs like any other.
 
 ## Reporting a vulnerability
