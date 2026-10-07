@@ -31,6 +31,7 @@ Turn the template into this project's repository: the stack chosen and set up, `
 - 2026-10-07: Claude Code is the only agent. `.claude/skills/` is the skills source; `.agents/` and the sync-skills mirror script are gone.
 - 2026-10-07: No AI review in CI; `claude.yml` and `claude-review.yml` are deleted. Review runs locally through the `reviewer` subagent.
 - 2026-10-07: TypeScript on Node 24, with Biome for lint and format and Vitest for tests. `@types/node` is pinned to 24 to match the runtime.
+- 2026-10-07: Moved to Node 26, which reaches LTS this month, before any deployment. `@types/node` moves with it. On Node 26, `node:sqlite` no longer prints an experimental warning.
 - 2026-10-07: SQLite through the built-in `node:sqlite`, not DuckDB ([storage choice](../../design-docs/storage-choice.md)).
 - 2026-10-07: Will run as a web app on a Hetzner server. The web framework and deployment are left to their own exec plan.
 
