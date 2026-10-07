@@ -17,7 +17,7 @@ How code in this repo is written. A rule a tool can check belongs in the linter 
 - No emoji or marketing words in code, logs, commits or docs.
 
 ## Stack
-- TypeScript 7 in strict mode on Node 24, as ES modules ([tsconfig.json](../tsconfig.json)). Relative imports end in `.js`, as `nodenext` module resolution requires, even though the file is `.ts`.
+- TypeScript 7 in strict mode on Node 26, as ES modules ([tsconfig.json](../tsconfig.json)). Relative imports end in `.js`, as `nodenext` module resolution requires, even though the file is `.ts`.
 - Biome lints and formats everything ([biome.json](../biome.json)): 2-space indents, single quotes, 120-column lines. `npm run format` fixes what it can.
 - Prefer Node built-ins over packages when they do the job, for example `node:sqlite` for the database.
 - SQL table and column names are `snake_case` and singular (`bean`, `roaster_id`); TypeScript names follow the usual camelCase and PascalCase.

@@ -3,7 +3,7 @@
 A personal database of the coffee beans I buy: roaster, roast, water, variety, altitude (masl) and more, plus how I rated each one. It will run as a small web app on a Hetzner server, backed by SQLite.
 
 ## Develop
-Needs Node 24 (`.nvmrc`).
+Needs Node 26 (`.nvmrc`).
 
 ```bash
 npm ci            # install

@@ -5,7 +5,7 @@ last-verified: 2026-10-07
 
 # Architecture
 
-BeanQuery is a TypeScript app on Node 24 that keeps its data in one SQLite file ([storage choice](docs/design-docs/storage-choice.md)). It will run as a web app on a Hetzner server; the web framework is not chosen yet. Keep this doc to what a reader can't see quickly from the code: the parts, which way dependencies point, and the rules that hold everywhere.
+BeanQuery is a TypeScript app on Node 26 that keeps its data in one SQLite file ([storage choice](docs/design-docs/storage-choice.md)). It will run as a web app on a Hetzner server; the web framework is not chosen yet. Keep this doc to what a reader can't see quickly from the code: the parts, which way dependencies point, and the rules that hold everywhere.
 
 ## Code map
 | Path | Holds |
