@@ -28,4 +28,4 @@ Point it at AGENTS.md rather than writing a second instruction file, keep `.env`
 ## Optional additions
 - **MCP servers:** add them in `.mcp.json` and give each the narrowest scope that works. Every server's tools cost context, and every server is code you run.
 - **Agent telemetry:** Claude Code exports OpenTelemetry when `CLAUDE_CODE_ENABLE_TELEMETRY=1` and an OTLP endpoint are set. Put them in user or managed settings, not the repo, and leave prompt and tool-content logging off: it sends source code to the telemetry backend.
-- **Harder verification gate:** a Claude Code `Stop` hook that runs `npm run verify` blocks a turn from ending while checks fail. It is slower and costs more per session; add it when agents often stop before verifying.
+- **Harder verification gate:** a Claude Code `Stop` hook that runs `pnpm verify` blocks a turn from ending while checks fail. It is slower and costs more per session; add it when agents often stop before verifying.

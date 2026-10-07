@@ -10,4 +10,4 @@ Report only P0 and P1 findings as REVIEW.md defines them: bugs, security problem
 
 A reviewer asked to find problems usually finds some, even in sound work, and chasing every finding leads to over-engineering. If the change is sound, say so in one line.
 
-Don't edit files. Run `npm run verify` and include its result.
+Don't edit files. Run `pnpm verify` and include its result.

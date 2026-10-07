@@ -17,7 +17,7 @@ function main() {
   try {
     git(['rev-parse', '--git-dir']);
   } catch {
-    console.error('Not a git repository yet. Run: git init -b main, then npm run setup again.');
+    console.error('Not a git repository yet. Run: git init -b main, then pnpm run setup again.');
     process.exit(1);
   }
   git(['config', 'core.hooksPath', HOOKS_DIR]);
@@ -26,7 +26,7 @@ function main() {
     chmodSync(path, 0o755);
     git(['add', '--chmod=+x', path]);
   }
-  console.log(`Git hooks enabled from ${HOOKS_DIR}/ (staged as executable). Next: npm run verify`);
+  console.log(`Git hooks enabled from ${HOOKS_DIR}/ (staged as executable). Next: pnpm verify`);
 }
 
 main();

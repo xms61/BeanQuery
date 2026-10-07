@@ -9,11 +9,14 @@ updates:
       actions:
         patterns: ['*']
 
-  # Minor and patch updates arrive as one grouped PR; each major gets its own.
+  # Minor and patch updates arrive as one grouped PR; each major gets its own. The npm ecosystem covers pnpm.
+  # The cooldown matches minimumReleaseAge in pnpm-workspace.yaml, so a PR never proposes a version pnpm refuses.
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 3
     groups:
       npm:
         patterns: ['*']

@@ -3,12 +3,12 @@
 A personal database of the coffee beans I buy: roaster, roast, water, variety, altitude (masl) and more, plus how I rated each one. It will run as a small web app on a Hetzner server, backed by SQLite.
 
 ## Develop
-Needs Node 26 (`.nvmrc`).
+Needs Node 26 (`.nvmrc`) and pnpm 12 (pinned in `package.json`; install it with `npm install -g pnpm@12`).
 
 ```bash
-npm ci            # install
-npm run setup     # once per clone: enables the git hooks
-npm run verify    # every check a change must pass
+pnpm install          # install
+pnpm run setup        # once per clone: enables the git hooks
+pnpm verify           # every check a change must pass
 ```
 
 ## Contributing, by people and coding agents
