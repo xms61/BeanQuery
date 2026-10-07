@@ -54,8 +54,7 @@ Done when a user can, on the deployed desktop web app:
 ## Plan
 1. **Design.**
    - Desktop screens in Figma, coffee-themed: library, bag detail, add bag (paste JSON, manual entry, or start from the pool), edit bag (with the note that pool facts change for everyone), roasters, the pool (with harvests), the account flows (redeem invite, sign in, account with export) and admin (invites, accounts, roasters, pool coffees and their edit log). Plus toasts and the Impressum.
-   - A dark mode as a second mode of the color variables, with every screen shown in both. The dark palette keeps to coffee: brown-black grounds instead of neutral black, crema-colored text, and a brighter cherry for today.
-   - Fix the drawn "roaster not registered" state: it offers "Register as a new roaster", which users can no longer do. It should say to ask the admin.
+   - A dark theme, with every screen shown in both. The dark palette keeps to coffee: brown-black grounds instead of neutral black, crema-colored text, and a brighter cherry for today. The Starter plan allows one mode per variable collection, so the dark colors are a second collection, "BeanQuery color dark", with the same variable names; on a paid plan they become a Dark mode of the first.
 
    Verify: the owner reviews the [Figma file](https://www.figma.com/design/ykqcmegfFstYXx8k9TE41u).
 2. **Contract.**
@@ -259,7 +258,7 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 ## Progress
 - [x] 2026-10-07 Research: reference lists, an existing tracker's model, water units, intake options
 - [x] 2026-10-07 Owner answered three rounds of questions, and delegated the rest (see Decision log)
-- [ ] Design in Figma, reviewed by the owner. Done 2026-10-07: tokens, text styles, components, and the Library, Bag detail and Add bag screens, plus the unregistered-roaster state (which needs the fix in step 1). Still to do: the dark mode (its palette and script are drafted locally; applying it is blocked by the Figma limit), edit bag, the pool, roasters, account flows, admin, toasts and the Impressum
+- [ ] Design in Figma, reviewed by the owner. Done 2026-10-07: tokens, text styles, components, and the Library, Bag detail and Add bag screens with the unregistered-roaster state, in light and dark. The owner ran the dark theme and the Add bag fixes through the Scripter plugin. Still to do: edit bag, the pool, roasters, account flows, admin, toasts and the Impressum
 - [ ] Contract: spec written 2026-10-07; JSON Schema, fixtures and the revised prompt still to do
 - [ ] Design docs written (accounts, web framework). The open questions were answered 2026-10-07
 - [ ] Database schema and migrations
@@ -315,9 +314,15 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - 2026-10-07: No privacy policy for a friends-only app; a joke Impressum signed "your friendly neighborhood brewer". Revisit if the app ever opens to the public.
 
 ## Surprises
-- 2026-10-07: every.coffee refuses plain HTTP fetches (403) but loads in a browser. Its product pages carry structured origin, variety and tasting notes, which could fill gaps in a pasted bag if the terms allow it.
+- 2026-10-07: every.coffee answered the agent's fetch tool with 403, but a plain `curl` with an honest user agent ("BeanQuery roaster sync (weekly, non-commercial)") got 200. The page was 7.6 MB, with 9,149 roaster slugs and 9,101 distinct names; 49 names have several slugs. Its product pages carry structured origin, variety and tasting notes.
+- 2026-10-07: The owner's CSV dump of roaster names is not a usable seed:
+  - It holds 7,251 names, plus 32 footer rows and the page's two A to Z letter rows.
+  - It lacks 1,856 names on the live page, 1,756 of them names ending in "Roasters".
+  - Six names differ only in spacing.
+
+  The live fetch in step 5 is the seed; the CSV is not used.
 - 2026-10-07: In the owner's water table the K column equals KH and Mg plus Ca equals GH. That holds because Lotus potassium is potassium bicarbonate, so potassium is the buffer in these recipes.
-- 2026-10-07: The Figma MCP stopped working after about 20 calls: Figma's Starter plan allows 20 MCP tool calls a month. The remaining screens need a Professional plan with a Full seat (200 calls a day), the next month's allowance, or another tool. The Add bag frame is 1240 px tall but its content needs about 1380 px, so the bottom of the review card is cut off until the frame is resized.
+- 2026-10-07: The Figma MCP stopped working after about 20 calls: Figma's Starter plan allows 20 MCP tool calls a month. The remaining screens need a Professional plan with a Full seat (200 calls a day), the next month's allowance, or another tool. The owner worked around it by running agent-written scripts in the Scripter plugin. Figma's Starter plan also allows only one mode per variable collection ("Limited to 1 modes only"), which is why the dark theme is a second collection.
 - 2026-10-07: A fresh-context review of this plan found eight gaps, all fixed in it the same day:
   - a private bean could leak into the pool through matching;
   - the contract couldn't carry a full export;
