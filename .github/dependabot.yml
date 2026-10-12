@@ -21,3 +21,14 @@ updates:
       npm:
         patterns: ['*']
         update-types: ['minor', 'patch']
+
+  # Keeps the Node base image's digest in the Dockerfile current, within Node 26 (Node itself moves with .nvmrc).
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 3
+    ignore:
+      - dependency-name: node
+        update-types: ['version-update:semver-major']

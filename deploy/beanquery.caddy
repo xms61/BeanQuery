@@ -1,0 +1,8 @@
+# BeanQuery's site for ysto's Caddy (docs/DEPLOY.md). Copied to the VPS's Caddy sites folder with the real domain in
+# place of beans.example.org. Caddy gets and renews its certificate and redirects HTTP to HTTPS. The app sets its own
+# security headers, HSTS included. No access log is configured, so no client address is written.
+beans.example.org {
+	encode zstd gzip
+	header -Server
+	reverse_proxy beanquery:3000
+}
