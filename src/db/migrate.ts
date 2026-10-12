@@ -263,6 +263,14 @@ const migrations: readonly Migration[] = [
       ALTER TABLE account ADD COLUMN time_zone TEXT CHECK (time_zone IS NULL OR length(time_zone) BETWEEN 1 AND 64);
     `,
   },
+  {
+    id: 6,
+    name: 'bag freeze date',
+    // The day the bag was frozen; filled with today when the bag is marked frozen without one, and editable.
+    sql: `
+      ALTER TABLE bag ADD COLUMN frozen_on TEXT CHECK (frozen_on IS date(frozen_on));
+    `,
+  },
 ];
 
 /** The id of the newest migration: a database whose schema_migration holds a higher one is from a newer version. */

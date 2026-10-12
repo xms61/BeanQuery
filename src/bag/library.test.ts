@@ -73,7 +73,7 @@ describe('library', () => {
     const fresh = bag(db, 1, 1, roastedOn('2026-10-01'));
     const undated = bag(db, 1, 2, roastedOn(null));
     const done = bag(db, 1, 3, roastedOn('2026-09-20'));
-    setBagState(db, 1, done, 'finished');
+    setBagState(db, 1, done, 'finished', '2026-10-12');
     bag(db, 2, 4, roastedOn('2026-10-01'));
 
     const result = library(db, 1, '2026-10-12');

@@ -11,6 +11,7 @@ import {
   dayLabel,
   dayMonth,
   dayRange,
+  fullDate,
   longDate,
   origin,
   phaseLabels,
@@ -73,7 +74,9 @@ libraryRoutes.post('/bags/:id/state', async (c) => {
   const body = await c.req.parseBody();
   const state = states.find((s) => s === body.state);
   const bagId = bagIdOf(c);
-  if (state === undefined || !setBagState(c.var.config.db, accountId, bagId, state)) return c.notFound();
+  if (state === undefined || !setBagState(c.var.config.db, accountId, bagId, state, todayFor(c, accountId))) {
+    return c.notFound();
+  }
   return c.redirect(body.from === 'library' ? '/' : `/bags/${bagId}`, 303);
 });
 
@@ -366,6 +369,7 @@ function BagPage(props: { detail: NonNullable<ReturnType<typeof bagDetail>>; tod
           <button class="button secondary" type="submit">
             Set state
           </button>
+          {bag.personal?.frozen_on && <span class="muted small">Frozen on {fullDate(bag.personal.frozen_on)}</span>}
         </form>
       </div>
 

@@ -472,6 +472,7 @@ export function bagColumns(bag: BagFields, grinderId: number | null): Record<str
     price_cents: personal?.price?.cents ?? null,
     currency: personal?.price?.currency ?? null,
     bought_on: personal?.bought_on ?? null,
+    frozen_on: personal?.frozen_on ?? null,
     shop: personal?.shop ?? null,
     state: personal?.state ?? 'sealed',
     rest_from: plan?.rest.from ?? null,

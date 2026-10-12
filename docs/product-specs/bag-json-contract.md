@@ -112,6 +112,7 @@ The format BeanQuery imports and exports bags in. A user pastes it from an LLM c
 | `personal.rebuy` | true, false or null | no | Would buy again |
 | `personal.note` | text or null | no | The user's notes |
 | `personal.bought_on` | date or null | no | Purchase date |
+| `personal.frozen_on` | date or null | no | The day the bag was frozen. The app fills today when the user sets the bag to frozen on its page or from a reminder and it has none; an import or edit saves it as given. An LLM leaves it out |
 | `personal.price` | `{ cents, currency }` or null | no | Whole cents and an ISO 4217 code such as `EUR` |
 | `personal.shop` | text or null | no | Where it was bought |
 

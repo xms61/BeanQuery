@@ -88,6 +88,7 @@ const personal = z.strictObject({
   rebuy: z.boolean().nullable().optional(),
   note: text.nullable().optional(),
   bought_on: date.nullable().optional(),
+  frozen_on: date.nullable().optional(),
   price: z
     .strictObject({
       cents: wholeFrom0,

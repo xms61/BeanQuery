@@ -110,7 +110,17 @@ describe('the library', () => {
 
     const after = await (await request('/', { cookie: me.cookie })).text();
     expect(after).not.toContain('class="toast');
-    expect(db.prepare('SELECT state FROM bag WHERE id = ?').get(portion)).toEqual({ state: 'frozen' });
+    expect(db.prepare('SELECT state, frozen_on FROM bag WHERE id = ?').get(portion)).toEqual({
+      state: 'frozen',
+      frozen_on: '2026-10-12',
+    });
+
+    // The freeze date shows on the bag's page, and the edit form carries it to change.
+    expect(await (await request(`/bags/${portion}`, { cookie: me.cookie })).text()).toContain('Frozen on 12 Oct 2026');
+    const form = await (await request(`/bags/${portion}/edit`, { cookie: me.cookie })).text();
+    expect(form).toMatch(
+      /name="personal\.frozen_on"[^>]*value="2026-10-12"|value="2026-10-12"[^>]*name="personal\.frozen_on"/,
+    );
   });
 });
 
