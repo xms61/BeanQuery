@@ -255,6 +255,14 @@ const migrations: readonly Migration[] = [
         CHECK (rated_on IS date(rated_on) AND (rated_on IS NULL OR rating IS NOT NULL));
     `,
   },
+  {
+    id: 5,
+    name: 'account time zone',
+    // An IANA name such as Europe/Berlin, checked by the app; NULL until the browser reports one.
+    sql: `
+      ALTER TABLE account ADD COLUMN time_zone TEXT CHECK (time_zone IS NULL OR length(time_zone) BETWEEN 1 AND 64);
+    `,
+  },
 ];
 
 /** Brings the schema up to date. Safe to run on every start: applied migrations are skipped. */

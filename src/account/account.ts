@@ -145,3 +145,14 @@ export function signOutEverywhere(db: DatabaseSync, accountId: number): void {
 export function deleteAccount(db: DatabaseSync, accountId: number): boolean {
   return db.prepare('DELETE FROM account WHERE id = ?').run(accountId).changes === 1;
 }
+
+/** What the account page shows about an account's bags: how many, and how many of them are on private coffees. */
+export function accountSummary(db: DatabaseSync, accountId: number): { bags: number; privateBags: number } {
+  const row = db
+    .prepare(
+      `SELECT count(*) AS bags, count(c.owner_account_id) AS private_bags
+       FROM bag b JOIN coffee c ON c.id = b.coffee_id WHERE b.account_id = ?`,
+    )
+    .get(accountId);
+  return { bags: Number(row?.bags), privateBags: Number(row?.private_bags) };
+}

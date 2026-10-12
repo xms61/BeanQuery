@@ -11,6 +11,7 @@ import { openDatabase } from '../db.js';
 import { importRoasters } from '../roaster/import.js';
 import {
   accountForSession,
+  accountSummary,
   createInvite,
   deleteAccount,
   normalizeAccountNumber,
@@ -254,5 +255,22 @@ describe('the first admin', () => {
     expect(readFileSync(join(src, 'admin', 'admin.ts'), 'utf8')).not.toMatch(
       /(INSERT\s+(OR\s+\w+\s+)?INTO|UPDATE|REPLACE\s+INTO)\s+account\b/i,
     );
+  });
+});
+
+describe('accountSummary', () => {
+  test('counts only the account’s own bags, and those on private coffees', () => {
+    const db = fresh();
+    importRoasters(db, [{ slug: 'nord-kaffe', name: 'Nord Kaffe', otherNames: [] }]);
+    const [mine, theirs] = [newAccount(db), newAccount(db)];
+    addBag(db, mine.accountId, structuredClone(fixture.bags[0]));
+    const secret = structuredClone(fixture.bags[1]);
+    secret.personal = { private: true };
+    addBag(db, mine.accountId, secret);
+    addBag(db, theirs.accountId, structuredClone(fixture.bags[0]));
+
+    expect(accountSummary(db, mine.accountId)).toEqual({ bags: 2, privateBags: 1 });
+    expect(accountSummary(db, 99)).toEqual({ bags: 0, privateBags: 0 });
+    db.close();
   });
 });
