@@ -1,10 +1,16 @@
 import type { DatabaseSync, SQLInputValue } from 'node:sqlite';
 import { coffeeNameKey } from '../coffee/name-key.js';
-import { type BagsDocument, type ContractError, type ContractLimits, parseBagsJson } from '../contract/bag-json.js';
+import {
+  type BagFields,
+  type BagsDocument,
+  type ContractBag,
+  type ContractError,
+  type ContractLimits,
+  parseBagsJson,
+} from '../contract/bag-json.js';
 import { roasterNameKey } from '../roaster/name-key.js';
 import { findRoasters, type Roaster, suggestRoasters } from '../roaster/registry.js';
 
-type ContractBag = BagsDocument['bags'][number];
 type RoasterRef = ContractBag['roaster'];
 
 export interface ImportOptions {
@@ -43,8 +49,18 @@ export type ImportResult =
 export function importBags(db: DatabaseSync, accountId: number, json: string, options: ImportOptions): ImportResult {
   const parsed = parseBagsJson(json, options.limits);
   if (!parsed.ok) return { status: 'invalid', errors: parsed.errors };
-  const document = parsed.value;
+  return saveDocument(db, accountId, parsed.value, 'json', options.roasterChoices);
+}
 
+/** Saves a checked document. A paste keeps each bag's raw JSON for audit; a bag typed in by hand has none. */
+export function saveDocument(
+  db: DatabaseSync,
+  accountId: number,
+  document: BagsDocument,
+  source: 'json' | 'manual',
+  roasterChoices?: Record<number, number>,
+): ImportResult {
+  const options = { roasterChoices };
   const resolved: { roaster: Roaster; confirmed: boolean }[] = [];
   const questions: RoasterQuestion[] = [];
   document.bags.forEach((bag, index) => {
@@ -57,7 +73,7 @@ export function importBags(db: DatabaseSync, accountId: number, json: string, op
   const notes = resolveRoasterNotes(db, document.roaster_notes ?? []);
   if ('errors' in notes) return { status: 'invalid', errors: notes.errors };
 
-  const save = new Saver(db, accountId);
+  const save = new Saver(db, accountId, source);
   db.exec('BEGIN');
   try {
     for (const grinder of document.grinders ?? []) save.grinder(grinder.name, grinder.note);
@@ -147,13 +163,14 @@ const scalarFacts: [column: string, read: (coffee: ContractBag['coffee']) => str
   ['altitude_max_m', (c) => c.altitude.max_m],
 ];
 
-/** The writes of one import, scoped to one account. Runs inside the caller's transaction. */
-class Saver {
+/** The writes of one import or edit, scoped to one account. Runs inside the caller's transaction. */
+export class Saver {
   readonly differences: Difference[] = [];
 
   constructor(
     private readonly db: DatabaseSync,
     private readonly accountId: number,
+    private readonly source: 'json' | 'manual' = 'json',
   ) {}
 
   /** The account's grinder with this name, ignoring case and spaces, created if missing. A given note replaces the old one. */
@@ -198,59 +215,12 @@ class Saver {
         .prepare('INSERT OR IGNORE INTO coffee_harvest (coffee_id, harvest) VALUES (?, ?)')
         .run(coffeeId, bag.harvest);
     }
-    const grinderId = bag.brew.grinder === null ? null : this.grinder(bag.brew.grinder);
-    const { plan, personal } = bag;
-    const water = bag.brew.water;
-    const alt = bag.brew.water_alt ?? null;
     const values: Record<string, SQLInputValue> = {
       account_id: this.accountId,
       coffee_id: coffeeId,
-      harvest: bag.harvest,
-      lot: bag.lot,
-      roast_degree: bag.roast.degree,
-      roast_degree_printed: bag.roast.printed,
-      roast_degree_assumed: bool(bag.roast.assumed),
-      roast_date: bag.roast_date.date,
-      roast_date_printed: bag.roast_date.printed,
-      roast_date_status: bag.roast_date.status,
-      weight_g: bag.weight.grams,
-      weight_assumed: bool(bag.weight.assumed),
-      price_cents: personal?.price?.cents ?? null,
-      currency: personal?.price?.currency ?? null,
-      bought_on: personal?.bought_on ?? null,
-      shop: personal?.shop ?? null,
-      state: personal?.state ?? 'sealed',
-      rest_from: plan?.rest.from ?? null,
-      rest_to: plan?.rest.to ?? null,
-      peak_from: plan?.peak.from ?? null,
-      peak_to: plan?.peak.to ?? null,
-      portion_from: plan?.portion.from ?? null,
-      portion_to: plan?.portion.to ?? null,
-      mid_peak: plan?.mid_peak ?? null,
-      tube_count: plan?.tubes ?? null,
-      dial_in_g: plan?.dial_in_g ?? null,
-      water_gh: water?.gh ?? null,
-      water_kh: water?.kh ?? null,
-      water_ca: water?.ca ?? null,
-      water_mg: water?.mg ?? null,
-      water_na: water?.na ?? null,
-      water_k: water?.k ?? null,
-      water_tds: water?.tds ?? null,
-      water_alt_gh: alt?.gh ?? null,
-      water_alt_kh: alt?.kh ?? null,
-      water_alt_ca: alt?.ca ?? null,
-      water_alt_mg: alt?.mg ?? null,
-      water_alt_na: alt?.na ?? null,
-      water_alt_k: alt?.k ?? null,
-      water_alt_tds: alt?.tds ?? null,
-      kettle_c: bag.brew.kettle_c,
-      grinder_id: grinderId,
-      grind: bag.brew.grind,
-      rating: personal?.rating ?? null,
-      rebuy: bool(personal?.rebuy),
-      note: personal?.note ?? null,
-      source: 'json',
-      import_payload: JSON.stringify(bag),
+      ...bagColumns(bag, bag.brew.grinder === null ? null : this.grinder(bag.brew.grinder)),
+      source: this.source,
+      import_payload: this.source === 'json' ? JSON.stringify(bag) : null,
     };
     const columns = Object.keys(values);
     const row = this.db
@@ -366,4 +336,57 @@ class Saver {
       insert.run(coffeeId, position, value);
     });
   }
+}
+
+/** The bag's own columns: everything but its account, coffee and provenance. Shared by saving and editing. */
+export function bagColumns(bag: BagFields, grinderId: number | null): Record<string, SQLInputValue> {
+  const { plan, personal } = bag;
+  const water = bag.brew.water;
+  const alt = bag.brew.water_alt ?? null;
+  return {
+    harvest: bag.harvest,
+    lot: bag.lot,
+    roast_degree: bag.roast.degree,
+    roast_degree_printed: bag.roast.printed,
+    roast_degree_assumed: bool(bag.roast.assumed),
+    roast_date: bag.roast_date.date,
+    roast_date_printed: bag.roast_date.printed,
+    roast_date_status: bag.roast_date.status,
+    weight_g: bag.weight.grams,
+    weight_assumed: bool(bag.weight.assumed),
+    price_cents: personal?.price?.cents ?? null,
+    currency: personal?.price?.currency ?? null,
+    bought_on: personal?.bought_on ?? null,
+    shop: personal?.shop ?? null,
+    state: personal?.state ?? 'sealed',
+    rest_from: plan?.rest.from ?? null,
+    rest_to: plan?.rest.to ?? null,
+    peak_from: plan?.peak.from ?? null,
+    peak_to: plan?.peak.to ?? null,
+    portion_from: plan?.portion.from ?? null,
+    portion_to: plan?.portion.to ?? null,
+    mid_peak: plan?.mid_peak ?? null,
+    tube_count: plan?.tubes ?? null,
+    dial_in_g: plan?.dial_in_g ?? null,
+    water_gh: water?.gh ?? null,
+    water_kh: water?.kh ?? null,
+    water_ca: water?.ca ?? null,
+    water_mg: water?.mg ?? null,
+    water_na: water?.na ?? null,
+    water_k: water?.k ?? null,
+    water_tds: water?.tds ?? null,
+    water_alt_gh: alt?.gh ?? null,
+    water_alt_kh: alt?.kh ?? null,
+    water_alt_ca: alt?.ca ?? null,
+    water_alt_mg: alt?.mg ?? null,
+    water_alt_na: alt?.na ?? null,
+    water_alt_k: alt?.k ?? null,
+    water_alt_tds: alt?.tds ?? null,
+    kettle_c: bag.brew.kettle_c,
+    grinder_id: grinderId,
+    grind: bag.brew.grind,
+    rating: personal?.rating ?? null,
+    rebuy: bool(personal?.rebuy),
+    note: personal?.note ?? null,
+  };
 }

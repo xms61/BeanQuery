@@ -178,7 +178,35 @@ export function parseBagsJson(json: string, limits: ContractLimits): ContractRes
     return { ok: false, errors: [{ path: '', message: `Not valid JSON: ${(error as Error).message}` }] };
   }
 
-  const result = bagsDocument(limits).safeParse(parsed);
+  return check(bagsDocument(limits), parsed);
+}
+
+export type ContractBag = BagsDocument['bags'][number];
+
+/** A bag's own fields, as the edit form sends them: no roaster or coffee facts, and no private flag. */
+const bagFields = bag
+  .omit({ roaster: true, coffee: true })
+  .extend({ personal: personal.omit({ private: true }).optional() });
+
+export type BagFields = z.infer<typeof bagFields>;
+
+/** Checks one bag typed in by hand, by the same rules as a paste. */
+export function parseBag(input: unknown): { ok: true; value: ContractBag } | { ok: false; errors: ContractError[] } {
+  return check(bag, input);
+}
+
+/** Checks the fields of an edited bag. Coffee facts and the private flag change through their own steps. */
+export function parseBagFields(
+  input: unknown,
+): { ok: true; value: BagFields } | { ok: false; errors: ContractError[] } {
+  return check(bagFields, input);
+}
+
+function check<T>(
+  schema: z.ZodType<T>,
+  input: unknown,
+): { ok: true; value: T } | { ok: false; errors: ContractError[] } {
+  const result = schema.safeParse(input);
   if (result.success) return { ok: true, value: result.data };
   return {
     ok: false,
