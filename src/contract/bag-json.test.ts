@@ -53,6 +53,13 @@ describe('parseBagsJson', () => {
     expect(result.ok && result.value.bags).toHaveLength(5);
   });
 
+  test("accepts the JSON template in the planner prompt, so the prompt can't drift from the contract", () => {
+    const prompt = readFileSync(new URL('../../prompts/coffee-planner.md', import.meta.url), 'utf8');
+    const template = /```json\n([\s\S]*?)\n```/.exec(prompt)?.[1] ?? '';
+    const result = parseBagsJson(template, pasteLimits);
+    expect(result.ok ? [] : result.errors).toEqual([]);
+  });
+
   test('accepts an alternative water, which is optional so documents without it still import', () => {
     const document = example();
     firstBag(document).brew.water_alt = { gh: 60, kh: 20, ca: 40, mg: 20, na: 0, k: 20, tds: null };

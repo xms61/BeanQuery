@@ -5,7 +5,7 @@ last-verified: 2026-10-12
 
 # Bag JSON contract, `beanquery.bags/v1`
 
-The format BeanQuery imports and exports bags in. A user pastes it from an LLM chat, and the export writes it, so an export imports back into any account. This contract is the source of truth: a prompt that produces the JSON follows it, never the other way round. Validation is implemented in [src/contract/bag-json.ts](../../src/contract/bag-json.ts), the one definition the importer uses. The [JSON Schema](../generated/bag-json-contract.schema.json) is generated from it with the paste limits, by `pnpm contract:schema`; change the definition and this spec together. Saving bags is scheduled in the [bean tracker plan](../exec-plans/active/2026-10-07-bean-tracker.md).
+The format BeanQuery imports and exports bags in. A user pastes it from an LLM chat, and the export writes it, so an export imports back into any account. This contract is the source of truth: a prompt that produces the JSON, such as the [coffee planner prompt](../../prompts/coffee-planner.md), follows it, never the other way round. Validation is implemented in [src/contract/bag-json.ts](../../src/contract/bag-json.ts), the one definition the importer uses. The [JSON Schema](../generated/bag-json-contract.schema.json) is generated from it with the paste limits, by `pnpm contract:schema`; change the definition and this spec together. Saving bags is scheduled in the [bean tracker plan](../exec-plans/active/2026-10-07-bean-tracker.md).
 
 ## Example
 ```json
