@@ -226,7 +226,7 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - [x] 2026-10-07 Owner answered three rounds of questions, and delegated the rest (see Decision log)
 - [ ] Design in Figma, reviewed by the owner. Done 2026-10-07: tokens, text styles, components, and the Library, Bag detail and Add bag screens with the unregistered-roaster state, in light and dark. The owner ran the dark theme and the Add bag fixes through the Scripter plugin. Still to do: edit bag, the pool, roasters, account flows, admin, toasts and the Impressum
 - [ ] Contract: spec written 2026-10-07; JSON Schema, fixtures and the revised prompt still to do
-- [ ] Design docs written. The open questions were answered 2026-10-07. Done 2026-10-12: [account model](../../design-docs/account-model.md). Still to do: the web framework, which the owner picks
+- [x] 2026-10-12 Design docs written: [account model](../../design-docs/account-model.md) and [web framework](../../design-docs/web-framework.md)
 - [x] 2026-10-12 Database schema and migrations: every table of the draft data model, in `src/db/migrate.ts`, tested in `src/db/schema.test.ts`
 - [x] 2026-10-12 Roaster registry imported from every.coffee (`src/roaster/`, `pnpm roasters:import`). The live run loaded 9,152 roasters. Still to do: the owner tries a page saved from Firefox and from Chrome (see Surprises). In later steps: the upload and add-roaster screens (step 8) and the weekly job on the server (step 10)
 - [ ] Bags, import and export in the domain layer
@@ -292,6 +292,8 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - 2026-10-12: `bag` references `grinder` through `(account_id, grinder_id)`, so deleting a grinder that bags use is refused. The domain clears `grinder_id` first. Rejected: `ON DELETE SET NULL`, which would null `account_id` too.
 - 2026-10-12: The review of step 4 found the draft had no column for the contract's `roast.printed`, so an export would have lost it. `bag.roast_degree_printed` holds it, and the draft above now lists it.
 - 2026-10-12: Columns the draft didn't list stay out until a step needs them. For example, the collective rating's "latest rated bag" needs a rating date, which step 7 adds in its own migration.
+- 2026-10-12: The web framework is Hono, rendering pages on the server with its JSX, with no client-side framework; see the [web framework](../../design-docs/web-framework.md) design doc. The owner chose it. Rejected: Fastify with templates, SvelteKit, Astro.
+- 2026-10-12: The contract is defined once with Zod 4, which gives the importer's validation with field-path errors and generates the JSON Schema (`z.toJSONSchema`). The owner approved the dependency. Rejected: Valibot, which needs a second package for JSON Schema, and a hand-written validator with a JSON Schema kept in sync by a test.
 
 ## Surprises
 - 2026-10-07: every.coffee answered the agent's fetch tool with 403, but a plain `curl` with an honest user agent ("BeanQuery roaster sync (weekly, non-commercial)") got 200. The page was 7.6 MB, with 9,149 roaster slugs and 9,101 distinct names; 49 names have several slugs. Its product pages carry structured origin, variety and tasting notes.
