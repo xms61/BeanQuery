@@ -13,7 +13,9 @@ The owner chose it on 2026-10-12. Step 9 of the [bean tracker plan](../exec-plan
 ## How it fits
 - **Layers:** `db → domain → web`. Hono and anything HTTP-shaped stay in the web layer. The domain layer takes plain values and an account id, and never sees a request. Step 9 adds the check that enforces the direction ([ARCHITECTURE.md](../../ARCHITECTURE.md)).
 - **Sessions:** the cookie and token rules of the [account model](account-model.md), written with Hono's cookie helpers. No session library.
-- **Forms:** Hono's CSRF middleware checks the `Origin` of every form post, on top of `SameSite=Lax` cookies.
+- **Forms:** Hono's CSRF middleware checks the `Origin` and `Sec-Fetch-Site` of every form post, on top of `SameSite=Lax` cookies. `PUBLIC_ORIGIN` pins the origin behind the proxy. Nothing changes state on a GET.
+- **Limits and failures:** bodies over 1 MB are refused before parsing. Sign-in allows 10 attempts per quarter hour and invite redemption 5 per hour, per client, counted in memory only. An unexpected error shows a generic page and is logged without the request.
+- **Headers:** `secureHeaders` with a CSP of `'self'` only (no inline scripts or styles), HSTS, and `Cache-Control: no-store` on every page.
 - **Input:** Hono's validator runs the same Zod definitions as the domain layer. The web layer checks only the shape of a request, and the domain enforces the contract.
 - **Assets:** fonts, styles and the script are served from the app itself, so pages load nothing from a third party.
 - **Tests:** Hono apps answer `app.request()` in-process, so route tests need no server and no network.

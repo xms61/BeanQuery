@@ -152,6 +152,13 @@ Done when a user can, on the deployed desktop web app:
    - deleting a used pool coffee keeps every bag, now on private copies; merging keeps every bag and the union of the harvests;
    - undoing an edit restores the old value and logs the undo. Undoing a rename whose old name another pool coffee has taken since is refused with a message.
 9. **Web layer.** Pick the framework, add the `db → domain → web` layer rule with its check, then build the screens from step 1, including the toasts and the Impressum. Phase and calendar dates come from the roast date plus the plan's day offsets, in the user's time zone. Verify: `pnpm verify`, plus an end-to-end test of redeem, paste, review, save, a due toast, edit, view, share, export and delete.
+
+   Built in five pull requests, each verified on its own:
+   1. The server, the layer rule, sessions, CSRF and security headers, the rate limits, and the account flows (redeem, the account number, sign in and out, the account page with JSON export, delete) and the Impressum.
+   2. The library with its filters and "Coming up", the bag detail with phase and plan dates in the user's time zone, and the toasts.
+   3. Adding bags (paste with review, roaster and coffee questions, manual entry, start from the pool), editing, re-paste with "Use mine", state and delete, and importing an export.
+   4. The pool and pool coffees, the roasters, the gear, and the admin screens.
+   5. The end-to-end test, the CSV export, and the fonts.
 10. **Deploy to Hetzner**, in its own exec plan: HTTPS, logs without IP addresses, nightly backups of the SQLite file with a tested restore, and the nightly collective-rating rebuild and weekly roaster import as jobs.
 11. **Docs.** Update AGENTS.md, README.md, ARCHITECTURE.md and [storage-choice.md](../../design-docs/storage-choice.md) from "the owner's coffees" to an invite-only multi-user app with a shared pool, plus SECURITY.md for untrusted input, account secrets and admin access. Verify: none of those docs still describes a single owner's database, their `last-verified` dates are updated, and `pnpm check:docs` passes.
 
@@ -232,7 +239,7 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - [x] 2026-10-12 Bags, import and export in the domain layer: import, export and re-paste (`src/bag/`), manual entry, edits, state and delete, the toasts, and editing coffee facts with the rename rule and "Use mine" (`src/coffee/edit.ts`)
 - [x] 2026-10-12 Pool, matching and collective rating: close-match questions, pool search, the collective-rating rebuild (`src/coffee/match.ts`, `search.ts`, `rating.ts`), and making a bean private or public later, from the bag page or by re-pasting `personal.private` (`src/coffee/privacy.ts`)
 - [x] 2026-10-12 Accounts by invitation, and admin: account numbers, invites, sessions, deleting an account, and the bootstrap command `pnpm admin` (`src/account/`); the admin tools for invites, accounts, roasters and aliases, and pool coffees with edit, merge, delete and undo (`src/admin/`). Their screens come with the web layer (step 9)
-- [ ] Web layer and screens
+- [ ] Web layer and screens. Done 2026-10-12: part 1, the server, layer rule, sessions and account flows (`src/web/`, `src/layers.test.ts`). Still to do: parts 2 to 5
 - [ ] Deployed (separate exec plan)
 - [ ] Project docs updated for multi-user
 
@@ -322,7 +329,13 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - 2026-10-12: Every admin tool takes the acting account and checks `is_admin` itself, so the web layer can't expose one by forgetting a check. The admin can't delete their own account from the list, so the last admin can't lock themselves out with one click.
 - 2026-10-12: Merging needs two pool coffees of the same roaster and keeps the kept coffee's facts unchanged; the admin edits them afterwards if needed. The dropped coffee's edit log goes with it. An undo writes the old value back through the normal edit, so it is logged and can itself be undone, and a value that no longer fits the facts (such as a minimum altitude above today's maximum) is refused as invalid.
 
+- 2026-10-12: The account number is never stored, only its hash, so the sidebar can't show its last digits as the design does; it shows "Account" alone.
+- 2026-10-12: The redeem page shows the account number in the POST response itself, never through a redirect, so the number is in no URL, history entry or cache. The session starts in the same response.
+- 2026-10-12: Rate limits key on the client address in memory only, and read `X-Forwarded-For` only when `TRUST_PROXY` is set, since behind a proxy on the same host every request comes from localhost.
+- 2026-10-12: The web layer runs no SQL itself (checked by `src/layers.test.ts`); the account page's counts come from `accountSummary` in `src/account/`.
+
 ## Surprises
+- 2026-10-12: pnpm 12 checks `node_modules` against the lockfile before running a script and installs to match. Running `pnpm verify` on a branch without Hono removed Hono from `node_modules`, and later commands hung waiting on the install. After switching branches, run `pnpm install` first.
 - 2026-10-07: every.coffee answered the agent's fetch tool with 403, but a plain `curl` with an honest user agent ("BeanQuery roaster sync (weekly, non-commercial)") got 200. The page was 7.6 MB, with 9,149 roaster slugs and 9,101 distinct names; 49 names have several slugs. Its product pages carry structured origin, variety and tasting notes.
 - 2026-10-07: The owner's CSV dump of roaster names is not a usable seed:
   - It holds 7,251 names, plus 32 footer rows and the page's two A to Z letter rows.
