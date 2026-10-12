@@ -231,7 +231,7 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - [x] 2026-10-12 Roaster registry imported from every.coffee (`src/roaster/`, `pnpm roasters:import`). The live run loaded 9,152 roasters. Still to do: the owner tries a page saved from Firefox and from Chrome (see Surprises). In later steps: the upload and add-roaster screens (step 8) and the weekly job on the server (step 10)
 - [x] 2026-10-12 Bags, import and export in the domain layer: import, export and re-paste (`src/bag/`), manual entry, edits, state and delete, the toasts, and editing coffee facts with the rename rule and "Use mine" (`src/coffee/edit.ts`)
 - [x] 2026-10-12 Pool, matching and collective rating: close-match questions, pool search, the collective-rating rebuild (`src/coffee/match.ts`, `search.ts`, `rating.ts`), and making a bean private or public later, from the bag page or by re-pasting `personal.private` (`src/coffee/privacy.ts`)
-- [ ] Accounts by invitation, and admin
+- [ ] Accounts by invitation, and admin. Done 2026-10-12: account numbers, invites, sessions, deleting an account, and the bootstrap command `pnpm admin` (`src/account/`). Still to do: the admin tools (accounts, roasters and aliases, pool coffees with merge, delete and undo)
 - [ ] Web layer and screens
 - [ ] Deployed (separate exec plan)
 - [ ] Project docs updated for multi-user
@@ -316,6 +316,9 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - 2026-10-12: The collective rating takes each account's latest rated bag by a new `bag.rated_on` date (migration 4), set to today whenever the rating changes and kept while it doesn't; the newer bag wins a tie. The date is not in the contract, so an imported export dates every rating to the import day. Rejected: the latest bag by id, which would ignore re-rating an older bag.
 - 2026-10-12: The design screens were built with Scripter scripts (kept in `docs/scratch/`, which git ignores), checked against a stand-in for the Figma API and a read-only layout review, and looked at as PNG exports. The owner accepted the screens and wants a visual pass later.
 - 2026-10-12: Making a bean private moves every bag of the account on that pool coffee, not just the one on screen, because the pool coffee is one bean for the account. Publishing offers only pool coffees as close matches, since the bean is leaving the account's private coffees, and a pick of `new` turns the private coffee itself into the pool coffee, keeping its id.
+- 2026-10-12: Account numbers and invite codes are read the Crockford way: case, spaces and dashes are ignored, and I, L and O count as 1, 1 and 0, so a misread character still signs in. Invite codes are 12 characters (60 bits): they live 14 days, work once, and redemption is rate-limited in the web layer. An unknown, used or expired code all answer the same `invalid`.
+- 2026-10-12: A session is renewed to 90 days from its last use on every request, and the account's `last_seen_on` is set to that day. Only hashes of tokens, numbers and codes are stored.
+- 2026-10-12: `pnpm admin create-admin` refuses a database that already has accounts unless given `--another`, so the first-admin command can't quietly mint admins. A test checks that no module but `src/account/bootstrap.ts` writes `is_admin`.
 
 ## Surprises
 - 2026-10-07: every.coffee answered the agent's fetch tool with 403, but a plain `curl` with an honest user agent ("BeanQuery roaster sync (weekly, non-commercial)") got 200. The page was 7.6 MB, with 9,149 roaster slugs and 9,101 distinct names; 49 names have several slugs. Its product pages carry structured origin, variety and tasting notes.
