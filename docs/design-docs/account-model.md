@@ -1,6 +1,6 @@
 ---
 status: draft
-last-verified: 2026-10-12
+last-verified: 2026-10-13
 ---
 
 # Account model: anonymous accounts by invitation
@@ -42,6 +42,8 @@ Passkeys come later. The tables are `account`, `invite` and `session` in [src/db
   - delete a pool coffee: each account's bags move to its own private coffee of that name, or to a private copy, as when a user makes the bean private. No bag is lost.
 
 **Time zone:** each account keeps the IANA time zone its browser reports when signing in, so phases, plan dates and reminders change at the user's midnight. The account page can change it. It is stored on the account, not in a cookie.
+
+**Theme:** System, Light or Dark, picked on the account page and stored on the account, so every device it signs in on shows the same. System, the default, follows the device's light or dark preference; every page's `<html>` carries `data-theme` for the other two, and the stylesheet's dark tokens follow it.
 
 **Export** writes the user's bags as JSON in the [bag JSON contract](../product-specs/bag-json-contract.md), with each bag's `personal` block, and as CSV. The JSON imports back into any account.
 

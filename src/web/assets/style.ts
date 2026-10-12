@@ -1,6 +1,27 @@
 import { createHash } from 'node:crypto';
 import { fontFaces } from './fonts.js';
 
+/** The dark color tokens ("BeanQuery color dark"), used by the system's dark preference and by the Dark theme. */
+const darkTokens = `
+  --bg-ground: #1B1613;
+  --bg-surface: #262019;
+  --bg-sunk: #141110;
+  --line-default: #3A322C;
+  --line-strong: #54493F;
+  --ink-default: #EDE6DC;
+  --ink-muted: #A99F94;
+  --ink-faint: #6E655D;
+  --ink-inverse: #1B1613;
+  --accent-cherry: #E0505A;
+  --phase-resting: #8E98A8;
+  --phase-resting-bg: #2B3038;
+  --phase-rested: #D9A53A;
+  --phase-peak: #6FA374;
+  --phase-peak-bg: #1F3322;
+  --phase-past: #C07A5C;
+  --phase-past-bg: #3A241B;
+  --freeze-default: #6FA0C6;`;
+
 /**
  * The app's stylesheet, served at /assets/app.css. The color tokens are the Figma variables ("BeanQuery color" and
  * "BeanQuery color dark"), so a screen here and its design use the same names. The fonts are served by the app
@@ -32,26 +53,15 @@ ${fontFaces}
   --font-text: 'Familjen Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-code: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 }
+/* The dark tokens apply under the system's dark preference unless the account chose Light, and always under Dark. */
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+${darkTokens}
+}
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg-ground: #1B1613;
-    --bg-surface: #262019;
-    --bg-sunk: #141110;
-    --line-default: #3A322C;
-    --line-strong: #54493F;
-    --ink-default: #EDE6DC;
-    --ink-muted: #A99F94;
-    --ink-faint: #6E655D;
-    --ink-inverse: #1B1613;
-    --accent-cherry: #E0505A;
-    --phase-resting: #8E98A8;
-    --phase-resting-bg: #2B3038;
-    --phase-rested: #D9A53A;
-    --phase-peak: #6FA374;
-    --phase-peak-bg: #1F3322;
-    --phase-past: #C07A5C;
-    --phase-past-bg: #3A241B;
-    --freeze-default: #6FA0C6;
+  :root:not([data-theme="light"]) {
+${darkTokens}
   }
 }
 * { box-sizing: border-box; }

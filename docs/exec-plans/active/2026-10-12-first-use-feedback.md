@@ -1,6 +1,6 @@
 ---
 status: draft
-last-verified: 2026-10-12
+last-verified: 2026-10-13
 ---
 
 # First-use feedback
@@ -27,7 +27,7 @@ The owner's first round of feedback from the live app: the bag page's buttons re
 ## Progress
 - [x] 2026-10-12 Buttons and delete: secondary buttons for privacy, and `GET /bags/:id/delete`, a confirmation page naming the bag
 - [x] 2026-10-12 Freeze date: `personal.frozen_on` in the contract and migration 6, filled by `setBagState` with the account's date, in the edit form, on the bag page, in the JSON export and the CSV
-- [ ] Theme switch
+- [x] 2026-10-13 Theme switch: `account.theme` in migration 7, set on the account page, carried as `data-theme` on every page's `<html>` for the signed-in account
 - [ ] Live filters and search
 - [ ] Statistics page
 
@@ -37,6 +37,7 @@ The owner's first round of feedback from the live app: the bag page's buttons re
 - 2026-10-12: The statistics page, by the owner's choices: origins, beans, and roasters and spending (not ratings over time); only the account's own bags; a world map served by the app, with the owner's go-ahead to download Natural Earth's country shapes; and Chart.js 4.5.1 as a new dependency, with the owner's go-ahead, for hover tooltips. Rejected: a ranked list instead of a map, SVG charts without a library, Apache ECharts (five times the size) and uPlot (built for time series).
 - 2026-10-12: The freeze date fills only where a bag is marked frozen on its own: the state picker on the bag page and the toast's "Done: frozen", with the account's date. The edit form and a paste save the date as given, blank included, since there a blank is the user's answer. A date stays when the bag leaves the frozen state.
 - 2026-10-12: The phone layout is not a priority for the owner; the deploy's phone check is dropped.
+- 2026-10-13: The page's theme reaches the layout through a per-request `AsyncLocalStorage` set by the session middleware, rather than a prop on each of the 30-odd pages. Signed-out pages follow the system.
 
 ## Surprises
 None yet.

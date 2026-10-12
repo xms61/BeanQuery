@@ -1,12 +1,14 @@
 import type { Child } from 'hono/jsx';
 import { assetVersion } from './assets/style.js';
+import { pageTheme } from './context.js';
 
 /** The current section of the app, which the sidebar marks. */
 export type Section = 'library' | 'pool' | 'add' | 'roasters' | 'gear' | 'account' | 'admin' | 'impressum';
 
 function Document(props: { title: string; children: Child }) {
+  const theme = pageTheme();
   return (
-    <html lang="en">
+    <html lang="en" data-theme={theme === 'system' ? undefined : theme}>
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
