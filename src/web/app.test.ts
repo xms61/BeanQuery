@@ -29,6 +29,28 @@ describe('signed-out visitors', () => {
     // Pages link the assets by a hash of their content, so a deploy's new ones are fetched despite the long cache.
     expect(await response.text()).toMatch(/href="\/assets\/app\.css\?v=[0-9a-f]{10}"/);
   });
+
+  test('get the design’s fonts from the app itself, each linked from the stylesheet by a hash of its bytes', async () => {
+    const { request } = setup();
+    const css = await (await request('/assets/app.css')).text();
+    const urls = [...css.matchAll(/url\('(\/assets\/fonts\/[a-z-]+\.woff2\?v=[0-9a-f]{10})'\)/g)].map((m) => m[1]);
+    expect(urls).toHaveLength(4);
+    expect(css).toContain("font-family: 'Familjen Grotesk'");
+    expect(css).toContain("font-family: 'JetBrains Mono'");
+    for (const url of urls) {
+      const font = await request(url as string);
+      expect([url, font.status, font.headers.get('content-type')]).toEqual([url, 200, 'font/woff2']);
+      expect(font.headers.get('cache-control')).toBe('public, max-age=31536000, immutable');
+      expect(new TextDecoder().decode((await font.arrayBuffer()).slice(0, 4))).toBe('wOF2');
+    }
+    for (const path of [
+      '/assets/fonts/OFL-jetbrains-mono.txt',
+      '/assets/fonts/..%2Fstyle.ts',
+      '/assets/fonts/x.woff2',
+    ]) {
+      expect([path, (await request(path)).status]).toEqual([path, 404]);
+    }
+  });
 });
 
 describe('redeeming an invite', () => {

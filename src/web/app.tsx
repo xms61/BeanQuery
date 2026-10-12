@@ -7,6 +7,7 @@ import { secureHeaders } from 'hono/secure-headers';
 import { accountForSession } from '../account/account.js';
 import { isTimeZone } from '../account/time-zone.js';
 import { isAdmin } from '../admin/admin.js';
+import { fontFiles } from './assets/fonts.js';
 import { appScript, styleSheet } from './assets/style.js';
 import { type Env, type Limits, sessionCookieName, setSessionCookie, type WebConfig } from './context.js';
 import { AppPage, CardPage } from './layout.js';
@@ -93,6 +94,11 @@ export function createApp(config: WebConfig): Hono<Env> {
       'Cache-Control': 'public, max-age=31536000, immutable',
     }),
   );
+  app.get('/assets/fonts/:file', (c) => {
+    const font = fontFiles.get(c.req.param('file'));
+    if (font === undefined) return c.notFound();
+    return c.body(font, 200, { 'Content-Type': 'font/woff2', 'Cache-Control': 'public, max-age=31536000, immutable' });
+  });
 
   app.route('/', accountRoutes);
   app.route('/', libraryRoutes);

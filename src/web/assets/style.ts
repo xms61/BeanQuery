@@ -1,11 +1,14 @@
 import { createHash } from 'node:crypto';
+import { fontFaces } from './fonts.js';
 
 /**
  * The app's stylesheet, served at /assets/app.css. The color tokens are the Figma variables ("BeanQuery color" and
- * "BeanQuery color dark"), so a screen here and its design use the same names. Fonts fall back to the system's until
- * the Familjen Grotesk and JetBrains Mono files are served from the app (see the tech-debt tracker).
+ * "BeanQuery color dark"), so a screen here and its design use the same names. The fonts are served by the app
+ * (fonts.ts); text in other scripts falls back to the system's fonts.
  */
 export const styleSheet = `
+${fontFaces}
+
 :root {
   color-scheme: light dark;
   --bg-ground: #EDEFE7;
