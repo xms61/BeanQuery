@@ -1,0 +1,14 @@
+# Allowlist: the image build sees only what is listed here, so a database, a .env or a backup stays out by default.
+*
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!tsconfig.json
+!src/
+# Tests and docs stay out of the image.
+**/*.test.ts
+**/*.test.tsx
+**/test-support.ts
+**/*.md
+**/*.db
+**/*.db-*

@@ -1,0 +1,40 @@
+# The app's services on the VPS (docs/DEPLOY.md). ysto's Caddy serves HTTPS for both apps: it joins the shared `edge`
+# network and imports deploy/beanquery.caddy, so this app publishes no port. This folder is copied to /opt/beanquery
+# on the VPS, with a .env made from .env.example beside it.
+name: beanquery
+
+services:
+  beanquery:
+    image: ghcr.io/xms61/beanquery:${BEANQUERY_VERSION:-latest}
+    restart: unless-stopped
+    env_file: .env
+    # Set here, so a .env copied from a development machine can't point the app elsewhere.
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      BEANQUERY_DB: /data/beanquery.db
+      TRUST_PROXY: 'true'
+      SECURE_COOKIES: 'true'
+    volumes:
+      # The database: the only place the app writes, besides the backups.
+      - beanquery_data:/data
+      - ${BEANQUERY_BACKUP_DIR:?set BEANQUERY_BACKUP_DIR in .env}:/backups
+    networks: [edge]
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ['no-new-privileges:true']
+    mem_limit: 512m
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options: { max-size: 10m, max-file: '3' }
+
+networks:
+  # Created once with `docker network create edge` (docs/DEPLOY.md); ysto's Caddy joins it too.
+  edge:
+    external: true
+
+# The database. Never rename it once deployed: a new name starts empty.
+volumes:
+  beanquery_data:

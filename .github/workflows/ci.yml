@@ -57,3 +57,54 @@ jobs:
         run: |
           if [ -n "$BASE_SHA" ]; then range="$BASE_SHA..$HEAD_SHA"; else range="--all"; fi
           "$RUNNER_TEMP/gitleaks" git --config .gitleaks.toml --redact --verbose --log-opts="$range" .
+
+  # The deploy image (docs/design-docs/hosting-and-deploy.md): built, started hardened as on the VPS, its commands run
+  # in it, and scanned.
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the image
+        run: docker build -t beanquery:ci .
+      - name: Start it hardened, as deploy/compose.yml runs it
+        run: |
+          docker volume create beanquery-ci-data
+          mkdir -p "$RUNNER_TEMP/backups" && sudo chown 1000:1000 "$RUNNER_TEMP/backups"
+          echo "HARDENING=--read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges:true" >> "$GITHUB_ENV"
+          echo "VOLUMES=-v beanquery-ci-data:/data -v $RUNNER_TEMP/backups:/backups" >> "$GITHUB_ENV"
+      - name: Healthy on /healthz, with its pages, stylesheet and fonts
+        run: |
+          docker run -d --name beanquery -p 127.0.0.1:3000:3000 $HARDENING $VOLUMES beanquery:ci
+          for attempt in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:3000/healthz; then break; fi
+            if [ "$attempt" = 30 ]; then docker logs beanquery; exit 1; fi
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:3000/sign-in | grep -q 'Sign in'
+          font=$(curl -sf http://127.0.0.1:3000/assets/app.css | grep -o "/assets/fonts/[^']*" | head -1)
+          curl -sf "http://127.0.0.1:3000$font" | head -c 4 | grep -q wOF2
+      - name: The server commands work in the image
+        run: |
+          docker exec beanquery node dist/account/cli.js create-invite --db /data/beanquery.db | grep -q '^Invite code: '
+          docker exec beanquery node dist/ops/cli.js rebuild-ratings --db /data/beanquery.db
+          docker exec beanquery node dist/ops/cli.js backup --db /data/beanquery.db --dir /backups
+          ls "$RUNNER_TEMP/backups" | grep -Eq '^beanquery-[0-9-]+T[0-9]{6}Z\.db$'
+      - name: No database, backup or env file in the image
+        run: |
+          # Root, so find can read every folder; the app itself runs as node. -xdev skips the mounted volumes.
+          found=$(docker run --rm --user root --entrypoint find beanquery:ci / -xdev -type f \
+            \( -iname '*.db' -o -iname '*.db-*' -o -iname '*.sqlite*' -o -name '.env*' \))
+          if [ -n "$found" ]; then echo "$found"; exit 1; fi
+      - name: Install Trivy
+        env:
+          TRIVY_VERSION: 0.74.0
+          TRIVY_SHA256: 2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a
+        run: |
+          curl -sSfL -o "$RUNNER_TEMP/trivy.tar.gz" "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  $RUNNER_TEMP/trivy.tar.gz" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/trivy.tar.gz" -C "$RUNNER_TEMP" trivy
+      - name: Fixable high and critical vulnerabilities (Trivy)
+        run: '"$RUNNER_TEMP/trivy" image --exit-code 1 --severity HIGH,CRITICAL --ignore-unfixed --no-progress beanquery:ci'
