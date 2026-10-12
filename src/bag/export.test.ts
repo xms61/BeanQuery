@@ -43,6 +43,7 @@ function sixtyBags() {
       rebuy: i % 3 === 1 ? i % 2 === 0 : null,
       note: i % 5 === 0 ? `Note ${i}` : null,
       bought_on: '2026-09-20',
+      frozen_on: i % 4 === 2 ? '2026-10-14' : null,
       price: i % 4 === 0 ? { cents: 1500 + i, currency: 'EUR' } : null,
       shop: null,
     };
@@ -73,6 +74,7 @@ describe('exportBags', () => {
         rebuy: null,
         note: null,
         bought_on: null,
+        frozen_on: null,
         price: null,
         shop: null,
       },

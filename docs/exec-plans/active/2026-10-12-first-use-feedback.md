@@ -26,7 +26,7 @@ The owner's first round of feedback from the live app: the bag page's buttons re
 
 ## Progress
 - [x] 2026-10-12 Buttons and delete: secondary buttons for privacy, and `GET /bags/:id/delete`, a confirmation page naming the bag
-- [ ] Freeze date
+- [x] 2026-10-12 Freeze date: `personal.frozen_on` in the contract and migration 6, filled by `setBagState` with the account's date, in the edit form, on the bag page, in the JSON export and the CSV
 - [ ] Theme switch
 - [ ] Live filters and search
 - [ ] Statistics page
@@ -35,6 +35,7 @@ The owner's first round of feedback from the live app: the bag page's buttons re
 - 2026-10-12: Owner's choices: the freeze date fills itself when a bag is marked frozen and stays editable; delete is a button and a confirmation page, which works without scripts (rejected: keeping the checkbox with a red button, and a browser dialog, which needs the app's script); the theme is a per-account switch on the account page (rejected: following the system only).
 - 2026-10-12: Filters and searches apply as they change, everywhere, by the owner's wish; first asked for the roaster search, then for all selections.
 - 2026-10-12: The statistics page, by the owner's choices: origins, beans, and roasters and spending (not ratings over time); only the account's own bags; a world map served by the app, with the owner's go-ahead to download Natural Earth's country shapes; and Chart.js 4.5.1 as a new dependency, with the owner's go-ahead, for hover tooltips. Rejected: a ranked list instead of a map, SVG charts without a library, Apache ECharts (five times the size) and uPlot (built for time series).
+- 2026-10-12: The freeze date fills only where a bag is marked frozen on its own: the state picker on the bag page and the toast's "Done: frozen", with the account's date. The edit form and a paste save the date as given, blank included, since there a blank is the user's answer. A date stays when the bag leaves the frozen state.
 - 2026-10-12: The phone layout is not a priority for the owner; the deploy's phone check is dropped.
 
 ## Surprises

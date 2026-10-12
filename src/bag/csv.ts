@@ -61,6 +61,7 @@ const columns: [header: string, read: (bag: ContractBag) => Cell][] = [
   ['rebuy', (b) => b.personal?.rebuy],
   ['note', (b) => b.personal?.note],
   ['bought_on', (b) => b.personal?.bought_on],
+  ['frozen_on', (b) => b.personal?.frozen_on],
   ['price', (b) => (b.personal?.price ? (b.personal.price.cents / 100).toFixed(2) : null)],
   ['currency', (b) => b.personal?.price?.currency],
   ['shop', (b) => b.personal?.shop],

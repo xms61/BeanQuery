@@ -69,6 +69,12 @@ const bagFields: Field[] = [
     options: ['sealed', 'open', 'frozen', 'finished'].map((s): [string, string] => [s, capital(s)]),
   },
   { name: 'personal.bought_on', label: 'Bought on', kind: 'date' },
+  {
+    name: 'personal.frozen_on',
+    label: 'Frozen on',
+    kind: 'date',
+    hint: 'filled when you set Frozen on the bag page or a reminder',
+  },
   { name: 'personal.price.amount', label: 'Price', kind: 'number', hint: 'such as 13.90' },
   { name: 'personal.price.currency', label: 'Currency', kind: 'text', hint: 'such as EUR' },
   { name: 'personal.shop', label: 'Shop', kind: 'text' },
@@ -182,6 +188,7 @@ export function bagToForm(bag: ContractBag): FormValues {
   const personal = bag.personal ?? {};
   put('personal.state', personal.state);
   put('personal.bought_on', personal.bought_on);
+  put('personal.frozen_on', personal.frozen_on);
   if (personal.price) {
     put('personal.price.amount', (personal.price.cents / 100).toFixed(2));
     put('personal.price.currency', personal.price.currency);
@@ -317,6 +324,7 @@ export function formToBag(values: FormValues): Record<string, unknown> {
       rebuy: rebuy === 'yes' ? true : rebuy === 'no' ? false : null,
       note: textOf(values['personal.note']),
       bought_on: textOf(values['personal.bought_on']),
+      frozen_on: textOf(values['personal.frozen_on']),
       price:
         amount === null
           ? null

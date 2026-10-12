@@ -56,8 +56,8 @@ describe('reminders', () => {
   test('a portion clears once the bag is open, frozen or finished', () => {
     const db = seeded();
     for (const state of ['open', 'frozen', 'finished'] as const) {
-      setBagState(db, 1, 1, 'sealed');
-      setBagState(db, 1, 1, state);
+      setBagState(db, 1, 1, 'sealed', '2026-10-12');
+      setBagState(db, 1, 1, state, '2026-10-12');
       expect(events(reminders(db, 1, '2026-10-01').due)).not.toContain('1 portion 2026-09-30');
     }
     db.close();
@@ -65,7 +65,7 @@ describe('reminders', () => {
 
   test('a mid-peak check shows on its day and the two after, until three days have passed', () => {
     const db = seeded();
-    setBagState(db, 1, 1, 'frozen');
+    setBagState(db, 1, 1, 'frozen', '2026-10-12');
     expect(events(reminders(db, 1, '2026-10-08').due)).not.toContain('1 mid_peak 2026-10-09');
     expect(events(reminders(db, 1, '2026-10-09').due)).toContain('1 mid_peak 2026-10-09');
     expect(events(reminders(db, 1, '2026-10-11').due)).toContain('1 mid_peak 2026-10-09');
@@ -82,7 +82,7 @@ describe('reminders', () => {
 
   test('a finished bag gets no reminders at all, and neither does one without a roast date or a plan', () => {
     const db = seeded();
-    setBagState(db, 1, 2, 'finished');
+    setBagState(db, 1, 2, 'finished', '2026-10-12');
     db.exec("UPDATE bag SET roast_date = NULL, roast_date_status = 'ambiguous' WHERE id = 1");
     db.exec(`UPDATE bag SET rest_from = NULL, rest_to = NULL, peak_from = NULL, peak_to = NULL, portion_from = NULL,
       portion_to = NULL, mid_peak = NULL, tube_count = NULL, dial_in_g = NULL WHERE id = 3`);

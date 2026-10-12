@@ -145,11 +145,25 @@ function applyBagFields(db: DatabaseSync, accountId: number, bagId: number, fiel
   }
 }
 
-/** Sets an own bag's state by hand. False when the account has no such bag. */
-export function setBagState(db: DatabaseSync, accountId: number, bagId: number, state: BagState): boolean {
+/**
+ * Sets an own bag's state by hand. Marking it frozen also fills its freeze date with `today`, the account's date, when
+ * it has none; a date it has stays, and other states leave it. False when the account has no such bag.
+ */
+export function setBagState(
+  db: DatabaseSync,
+  accountId: number,
+  bagId: number,
+  state: BagState,
+  today: string,
+): boolean {
   if (!states.includes(state)) throw new Error(`A bag's state is sealed, open, frozen or finished, not ${state}`);
   return (
-    db.prepare('UPDATE bag SET state = ? WHERE id = ? AND account_id = ?').run(state, bagId, accountId).changes === 1
+    db
+      .prepare(
+        `UPDATE bag SET state = ?1, frozen_on = CASE WHEN ?1 = 'frozen' THEN coalesce(frozen_on, ?2) ELSE frozen_on END
+         WHERE id = ?3 AND account_id = ?4`,
+      )
+      .run(state, today, bagId, accountId).changes === 1
   );
 }
 

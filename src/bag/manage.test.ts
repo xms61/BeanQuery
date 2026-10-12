@@ -244,7 +244,7 @@ describe('saveBagEdit', () => {
 describe('rateBag', () => {
   test('sets the rating, rebuy and note, dated today, and keeps every other field', () => {
     const db = seeded();
-    setBagState(db, 1, 1, 'open');
+    setBagState(db, 1, 1, 'open', '2026-10-12');
     expect(rateBag(db, 1, 1, { rating: 4.5, rebuy: true, note: 'Bright' })).toEqual({ status: 'saved' });
     expect(
       db.prepare('SELECT state, rating, rated_on IS NOT NULL AS dated, rebuy, note, grind FROM bag WHERE id = 1').get(),
@@ -268,8 +268,8 @@ describe('rateBag', () => {
 describe('setBagState', () => {
   test('sets the state of an own bag only', () => {
     const db = seeded();
-    expect(setBagState(db, 1, 3, 'frozen')).toBe(true);
-    expect(setBagState(db, 2, 4, 'finished')).toBe(false);
+    expect(setBagState(db, 1, 3, 'frozen', '2026-10-12')).toBe(true);
+    expect(setBagState(db, 2, 4, 'finished', '2026-10-12')).toBe(false);
     expect(db.prepare('SELECT id, state FROM bag WHERE id IN (3, 4) ORDER BY id').all()).toEqual([
       { id: 3, state: 'frozen' },
       { id: 4, state: 'sealed' },
@@ -277,9 +277,22 @@ describe('setBagState', () => {
     db.close();
   });
 
+  test('marking a bag frozen fills its freeze date with today when it has none, and keeps one it has', () => {
+    const db = seeded();
+    expect(setBagState(db, 1, 3, 'open', '2026-10-13')).toBe(true);
+    expect(setBagState(db, 1, 3, 'frozen', '2026-10-14')).toBe(true);
+    expect(setBagState(db, 1, 3, 'open', '2026-10-15')).toBe(true);
+    expect(setBagState(db, 1, 3, 'frozen', '2026-10-16')).toBe(true);
+    expect(db.prepare('SELECT state, frozen_on FROM bag WHERE id = 3').get()).toEqual({
+      state: 'frozen',
+      frozen_on: '2026-10-14',
+    });
+    db.close();
+  });
+
   test('refuses a state that is not sealed, open, frozen or finished', () => {
     const db = seeded();
-    expect(() => setBagState(db, 1, 3, 'opened' as 'open')).toThrow(/sealed, open, frozen or finished/);
+    expect(() => setBagState(db, 1, 3, 'opened' as 'open', '2026-10-12')).toThrow(/sealed, open, frozen or finished/);
     db.close();
   });
 });

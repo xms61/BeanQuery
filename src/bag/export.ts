@@ -135,6 +135,7 @@ function toContractBag(row: Row, varieties: string[], tastingNotes: string[]): C
       rebuy: flag(row.rebuy),
       note: text(row.note),
       bought_on: text(row.bought_on),
+      frozen_on: text(row.frozen_on),
       price: row.price_cents === null ? null : { cents: Number(row.price_cents), currency: String(row.currency) },
       shop: text(row.shop),
     },
