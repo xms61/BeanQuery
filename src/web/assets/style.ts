@@ -211,6 +211,25 @@ fieldset.question legend { font-weight: 600; padding: 0 6px; }
 label.choice { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line-default); border-radius: 8px; padding: 10px 14px; margin: 8px 0; }
 .bag-summary h2 { margin-top: 16px; }
 
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line-default); margin: -8px 0 24px; }
+.tab { padding: 8px 14px; text-decoration: none; color: var(--ink-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab[aria-current='page'] { color: var(--ink-default); border-bottom-color: var(--ink-default); font-weight: 500; }
+.add-grid.wide-first { grid-template-columns: 1fr 320px; }
+fieldset.form-group { border: 0; border-top: 1px solid var(--line-default); padding: 16px 0 0; margin: 0 0 8px; min-width: 0; }
+fieldset.form-group legend { font-weight: 600; padding: 0 8px 0 0; }
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0 16px; }
+.form-grid label.field input, .form-grid label.field select, .form-grid label.field textarea { width: 100%; }
+.form-grid label.field.span { grid-column: 1 / -1; }
+.form-grid .check { margin: 30px 0 16px; font-size: 13px; }
+label.field select { border-radius: 8px; font-size: 15px; line-height: 22px; padding: 9px 12px; }
+input[type='date'], label.field textarea {
+  font: 15px/22px var(--font-text); color: var(--ink-default);
+  background: var(--bg-surface); border: 1px solid var(--line-strong); border-radius: 8px; padding: 9px 12px;
+}
+.bag-tools { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.bag-tools .actions { margin: 0; }
+.verdict .form-grid { grid-template-columns: 1fr 1fr; }
+
 @media print {
   .side, footer, .actions, .no-print { display: none; }
 }

@@ -1,5 +1,7 @@
 import type { DatabaseSync } from 'node:sqlite';
+import type { CoffeeFacts } from '../contract/bag-json.js';
 import { roasterNameKey } from '../roaster/name-key.js';
+import { readCoffee } from './edit.js';
 
 export interface PoolCoffee {
   coffeeId: number;
@@ -73,4 +75,24 @@ export function searchPool(
       return words.every((word) => haystack.has(word));
     })
     .map(({ coffee }) => coffee);
+}
+
+/**
+ * What a new bag started from a coffee begins with: its roaster's name, its facts, and whether it is the account's own
+ * private coffee. Undefined for a missing coffee and for another account's private one, alike.
+ */
+export function startingPoint(
+  db: DatabaseSync,
+  accountId: number,
+  coffeeId: number,
+): { roaster: string; coffee: CoffeeFacts; private: boolean } | undefined {
+  const row = db
+    .prepare(
+      `SELECT r.name AS roaster, c.owner_account_id FROM coffee c JOIN roaster r ON r.id = c.roaster_id
+       WHERE c.id = ? AND (c.owner_account_id IS NULL OR c.owner_account_id = ?)`,
+    )
+    .get(coffeeId, accountId);
+  const coffee = row === undefined ? undefined : readCoffee(db, coffeeId);
+  if (row === undefined || coffee === undefined) return undefined;
+  return { roaster: String(row.roaster), coffee, private: row.owner_account_id !== null };
 }
