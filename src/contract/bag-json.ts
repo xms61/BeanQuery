@@ -118,12 +118,19 @@ const bag = z.strictObject({
     assumed: z.boolean(),
   }),
   plan: plan.nullable(),
-  brew: z.strictObject({
-    water: water.nullable(),
-    kettle_c: z.int().min(70).max(100).nullable(),
-    grinder: text.nullable(),
-    grind: text.nullable(),
-  }),
+  brew: z
+    .strictObject({
+      water: water.nullable(),
+      // Optional, so documents written before it existed still import.
+      water_alt: water.nullable().optional(),
+      kettle_c: z.int().min(70).max(100).nullable(),
+      grinder: text.nullable(),
+      grind: text.nullable(),
+    })
+    .refine((b) => b.water !== null || b.water_alt == null, {
+      message: 'An alternative water needs a main water',
+      path: ['water_alt'],
+    }),
   personal: personal.optional(),
 });
 

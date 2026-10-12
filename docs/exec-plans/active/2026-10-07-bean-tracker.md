@@ -210,7 +210,7 @@ The columns of `bag`:
 - **Purchase:** `price_cents`, `currency`, `bought_on`, `shop`, `state` (`sealed`, `open`, `frozen` or `finished`, set by hand).
 - **Plan, as day offsets:** `rest_from`, `rest_to`, `peak_from`, `peak_to`, `portion_from`, `portion_to`, `mid_peak`, then `tube_count` and `dial_in_g`.
 - **Reminders:** `mid_peak_dismissed`, set when the user dismisses the mid-peak toast.
-- **Water:** `water_gh` and `water_kh` (ppm as CaCO3), required whenever water is given. Optional `water_ca`, `water_mg`, `water_na` and `water_k` (ppm as CaCO3) and `water_tds` (ppm).
+- **Water:** `water_gh` and `water_kh` (ppm as CaCO3), required whenever water is given. Optional `water_ca`, `water_mg`, `water_na` and `water_k` (ppm as CaCO3) and `water_tds` (ppm). An optional alternative water in `water_alt_*` with the same columns, only beside a main water.
 - **Brew:** `kettle_c`, `grinder_id`, `grind` (one setting, in the grinder's own notation).
 - **The user's verdict:** `rating` (0 to 5 in steps of 0.5), `rebuy`, `note`.
 - **Provenance:** `source` (`json` or `manual`), `import_payload` (the raw JSON, for audit).
@@ -225,7 +225,7 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - [x] 2026-10-07 Research: reference lists, an existing tracker's model, water units, intake options
 - [x] 2026-10-07 Owner answered three rounds of questions, and delegated the rest (see Decision log)
 - [ ] Design in Figma, reviewed by the owner. Done 2026-10-07: tokens, text styles, components, and the Library, Bag detail and Add bag screens with the unregistered-roaster state, in light and dark. The owner ran the dark theme and the Add bag fixes through the Scripter plugin. Still to do: edit bag, the pool, roasters, account flows, admin, toasts and the Impressum
-- [ ] Contract: spec written 2026-10-07. Done 2026-10-12: the Zod definition and validation in `src/contract/bag-json.ts`, and the generated JSON Schema in `docs/generated/`. Still to do, by the owner: fixtures from three real bags, and the revised prompt
+- [ ] Contract: spec written 2026-10-07. Done 2026-10-12: the Zod definition and validation in `src/contract/bag-json.ts`, the generated JSON Schema in `docs/generated/`, the revised planner prompt (kept by the owner), and a fixture of five real bags from two roasters. Still to do: commit the prompt as `prompts/coffee-planner.md`
 - [x] 2026-10-12 Design docs written: [account model](../../design-docs/account-model.md) and [web framework](../../design-docs/web-framework.md)
 - [x] 2026-10-12 Database schema and migrations: every table of the draft data model, in `src/db/migrate.ts`, tested in `src/db/schema.test.ts`
 - [x] 2026-10-12 Roaster registry imported from every.coffee (`src/roaster/`, `pnpm roasters:import`). The live run loaded 9,152 roasters. Still to do: the owner tries a page saved from Firefox and from Chrome (see Surprises). In later steps: the upload and add-roaster screens (step 8) and the weekly job on the server (step 10)
@@ -296,6 +296,10 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - 2026-10-12: The contract is defined once with Zod 4, which gives the importer's validation with field-path errors and generates the JSON Schema (`z.toJSONSchema`). The owner approved the dependency. Rejected: Valibot, which needs a second package for JSON Schema, and a hand-written validator with a JSON Schema kept in sync by a test.
 - 2026-10-12: The contract now says altitude is whole metres from 0, with both bounds set or both null, as the schema already enforced. Altitudes below sea level don't occur for coffee.
 - 2026-10-12: Until the owner's three real bags arrive as fixtures, a test validates the example in the contract spec itself, so the spec and the definition can't drift apart.
+- 2026-10-12: The owner revised the planner prompt. Reverses part of the 2026-10-07 contract decision:
+  - **Alternative water:** a bag can log a second, alternative water as `brew.water_alt`, shaped like `brew.water` and only beside it. It is optional, so documents without it stay valid v1 and no v2 is needed. The database gets `water_alt_*` columns in migration 3.
+  - **Grind:** the recipe now varies, so the prompt gives one grind for fresh beans and one for frozen tubes, with no per-brewer settings. The contract still stores one: the fresh setting, from which the frozen one follows by one tick.
+  - **English:** the prompt writes everything in English. It translates descriptive wording (process, roast wording, tasting notes, country names) and keeps proper names as printed. The spec says so in place of "kept verbatim". This stays v1: the fields still hold the bag's wording, only in English, and every earlier payload, French wording included, still validates.
 
 ## Surprises
 - 2026-10-07: every.coffee answered the agent's fetch tool with 403, but a plain `curl` with an honest user agent ("BeanQuery roaster sync (weekly, non-commercial)") got 200. The page was 7.6 MB, with 9,149 roaster slugs and 9,101 distinct names; 49 names have several slugs. Its product pages carry structured origin, variety and tasting notes.
@@ -333,6 +337,7 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - 2026-10-12: The fresh-context review found that the parser accepted only the server's markup (relative links in double quotes), so a page saved from a browser, with full URLs, would have been refused. It now also reads full every.coffee URLs, single quotes and upper-case tags. Saving the page from Firefox and Chrome and running `pnpm roasters:import --file` on each is still to be tried by the owner, since an agent can't use a browser's save dialog.
 - 2026-10-12: pnpm refused Zod 4.6.6, published the day before, under its three-day `minimumReleaseAge`. Zod 4.6.5 (2026-09-13) is pinned instead. Dependabot will offer 4.6.6 once it is old enough.
 - 2026-10-12: For step 6: the contract accepts `roaster_notes` that name one roaster twice, by the same slug or by two spellings that resolve to it, but `roaster_note` keys on account and roaster. The save has to merge or reject such duplicates after resolving the roasters.
+- 2026-10-12: The owner's first five bags kept Tanat's French wording. The fixture (`src/contract/fixtures/owner-bags-2026-10-12.json`) holds them translated by the agent under the new English rule, with `water_alt` filled in from the prompt's water table, because the owner's JSON predates both changes. Every other value matched the prompt's rules.
 
 ## Validation
 `pnpm verify` passes. The end-to-end test:

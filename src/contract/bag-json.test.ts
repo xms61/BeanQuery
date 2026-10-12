@@ -46,6 +46,28 @@ describe('parseBagsJson', () => {
     expect(errorsOf(document)).toEqual([]);
   });
 
+  test("accepts the owner's real bags, from the planner prompt on 2026-10-12", () => {
+    const fixture = readFileSync(new URL('./fixtures/owner-bags-2026-10-12.json', import.meta.url), 'utf8');
+    const result = parseBagsJson(fixture, pasteLimits);
+    expect(result.ok ? [] : result.errors).toEqual([]);
+    expect(result.ok && result.value.bags).toHaveLength(5);
+  });
+
+  test('accepts an alternative water, which is optional so documents without it still import', () => {
+    const document = example();
+    firstBag(document).brew.water_alt = { gh: 60, kh: 20, ca: 40, mg: 20, na: 0, k: 20, tds: null };
+    expect(errorsOf(document)).toEqual([]);
+    firstBag(document).brew.water_alt = null;
+    expect(errorsOf(document)).toEqual([]);
+  });
+
+  test('rejects an alternative water without a main water', () => {
+    const document = example();
+    firstBag(document).brew.water = null;
+    firstBag(document).brew.water_alt = { gh: 60, kh: 20 };
+    expect(errorsOf(document)).toEqual([{ path: 'bags[0].brew.water_alt', message: expect.stringMatching(/water/) }]);
+  });
+
   test('rejects text that is not JSON, and says so', () => {
     expect(parseBagsJson('{"schema": ', pasteLimits)).toEqual({
       ok: false,

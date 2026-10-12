@@ -223,6 +223,29 @@ const migrations: readonly Migration[] = [
       END;
     `,
   },
+  {
+    id: 3,
+    name: 'alternative water',
+    // ALTER TABLE can't add table constraints, so each column's CHECK carries the rule: an alternative water needs a
+    // main water, and needs both GH and KH, like the main one.
+    sql: `
+      -- Each check starts with IS NULL OR, because NULL AND FALSE is FALSE, which would reject a bag with no water.
+      ALTER TABLE bag ADD COLUMN water_alt_gh REAL
+        CHECK (water_alt_gh IS NULL OR (water_alt_gh >= 0 AND water_gh IS NOT NULL));
+      ALTER TABLE bag ADD COLUMN water_alt_kh REAL
+        CHECK ((water_alt_kh IS NULL) = (water_alt_gh IS NULL) AND (water_alt_kh IS NULL OR water_alt_kh >= 0));
+      ALTER TABLE bag ADD COLUMN water_alt_ca REAL
+        CHECK (water_alt_ca IS NULL OR (water_alt_ca >= 0 AND water_alt_gh IS NOT NULL));
+      ALTER TABLE bag ADD COLUMN water_alt_mg REAL
+        CHECK (water_alt_mg IS NULL OR (water_alt_mg >= 0 AND water_alt_gh IS NOT NULL));
+      ALTER TABLE bag ADD COLUMN water_alt_na REAL
+        CHECK (water_alt_na IS NULL OR (water_alt_na >= 0 AND water_alt_gh IS NOT NULL));
+      ALTER TABLE bag ADD COLUMN water_alt_k REAL
+        CHECK (water_alt_k IS NULL OR (water_alt_k >= 0 AND water_alt_gh IS NOT NULL));
+      ALTER TABLE bag ADD COLUMN water_alt_tds REAL
+        CHECK (water_alt_tds IS NULL OR (water_alt_tds >= 0 AND water_alt_gh IS NOT NULL));
+    `,
+  },
 ];
 
 /** Brings the schema up to date. Safe to run on every start: applied migrations are skipped. */
