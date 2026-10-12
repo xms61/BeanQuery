@@ -1,6 +1,6 @@
 ---
 status: draft
-last-verified: 2026-10-07
+last-verified: 2026-10-12
 ---
 
 # Agent tools
@@ -15,6 +15,7 @@ Which files configure the coding agent and how to extend them. This repo is set 
 | [REVIEW.md](../REVIEW.md) | What the reviewer subagent and people report and skip |
 | [.claude/settings.json](../.claude/settings.json) | Permissions, sandbox and the guard hook |
 | [.claude/agents/reviewer.md](../.claude/agents/reviewer.md) | Fresh-context review subagent |
+| [.claude/agents/security-reviewer.md](../.claude/agents/security-reviewer.md) | Fresh-context security review against the OWASP Top 10:2025, ASVS 5.0 and Hono, Node and TypeScript pitfalls, for changes to the web layer, accounts, admin, input, SQL or dependencies. Update its Hono version floor when new advisories appear |
 | `.claude/skills/` | Procedures loaded on demand: [exec-plan](../.claude/skills/exec-plan/SKILL.md), [doc-gardening](../.claude/skills/doc-gardening/SKILL.md) |
 | [scripts/agent-hooks/guard-tool-use.mjs](../scripts/agent-hooks/guard-tool-use.mjs) | Blocks edits to `.env`, keys, lockfiles and `.git/`, and commands that skip hooks, force-push or touch `.env` |
 
