@@ -265,6 +265,9 @@ const migrations: readonly Migration[] = [
   },
 ];
 
+/** The id of the newest migration: a database whose schema_migration holds a higher one is from a newer version. */
+export const schemaVersion = Math.max(...migrations.map((migration) => migration.id));
+
 /** Brings the schema up to date. Safe to run on every start: applied migrations are skipped. */
 export function migrate(db: DatabaseSync): void {
   db.exec(`CREATE TABLE IF NOT EXISTS schema_migration (

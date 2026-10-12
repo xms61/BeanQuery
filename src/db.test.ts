@@ -10,4 +10,10 @@ describe('openDatabase', () => {
     expect(() => db.exec('INSERT INTO bean (roaster_id) VALUES (42)')).toThrow(/FOREIGN KEY constraint failed/);
     db.close();
   });
+
+  test('waits up to 5 seconds for a lock held by another connection, such as a nightly job', () => {
+    const db = openDatabase(':memory:');
+    expect(db.prepare('PRAGMA busy_timeout').get()).toEqual({ timeout: 5000 });
+    db.close();
+  });
 });
