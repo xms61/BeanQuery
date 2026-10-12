@@ -14,10 +14,13 @@ import { findRoasters } from '../roaster/registry.js';
 import {
   addRoasterAlias,
   adminAddRoaster,
+  adminCoffee,
   adminCreateInvite,
   adminDeleteAccount,
   adminEditCoffee,
+  adminImportRoasters,
   adminOpenInviteCount,
+  adminPoolCoffees,
   deletePoolCoffee,
   editLog,
   listAccounts,
@@ -283,6 +286,70 @@ describe('admin tools', () => {
     }
     expect(exportBags(db, 2).bags[0]?.coffee).toEqual(fixture.bags[0].coffee);
     expect(deletePoolCoffee(db, 1, threesPrivate)).toEqual({ status: 'not_found' });
+    db.close();
+  });
+});
+
+describe('admin screens data', () => {
+  test('imports a saved roaster page, and refuses one without roaster links', () => {
+    const db = seeded();
+    const page =
+      '<a href="/roaster/friedhats">Friedhats</a> <a href="https://every.coffee/roaster/nord-kaffe">Nord Kaffe</a>';
+    expect(adminImportRoasters(db, 1, page)).toEqual({
+      status: 'saved',
+      summary: { added: 1, renamed: 0, unchanged: 1, notListed: 1 },
+    });
+    expect(adminImportRoasters(db, 1, '<p>Just a moment...</p>')).toMatchObject({
+      status: 'invalid',
+      message: expect.stringContaining('Found no roaster links'),
+    });
+    expect(adminImportRoasters(db, 2, page)).toEqual({ status: 'not_admin' });
+    db.close();
+  });
+
+  test('refuses a roaster name without a letter or digit', () => {
+    const db = seeded();
+    expect(adminAddRoaster(db, 1, ' -- ')).toEqual({ status: 'invalid' });
+    expect(count(db, 'SELECT count(*) AS n FROM roaster')).toBe(2);
+    db.close();
+  });
+
+  test("lists pool coffees with every account's bags and the edit log's size, never a private coffee", () => {
+    const db = seeded();
+    sasabaBag(db, 2, '2025');
+    const secret = structuredClone(fixture.bags[1]);
+    secret.coffee.name = 'Secret Danta';
+    secret.personal = { private: true };
+    addBag(db, 3, secret);
+    adminEditCoffee(db, 1, 1, { ...fixture.bags[0].coffee, region: 'Uraga' });
+
+    const all = adminPoolCoffees(db, 1);
+    if (!('coffees' in all)) throw new Error('not admin');
+    expect(all.total).toBe(5);
+    expect(all.coffees.map((c) => c.name)).not.toContain('Secret Danta');
+    expect(all.coffees.find((c) => c.name === 'Ethiopia Sasaba')).toMatchObject({ bags: 2, edits: 1 });
+    expect(adminPoolCoffees(db, 1, 'nord danta')).toMatchObject({ total: 1, coffees: [{ name: 'Peru La Danta' }] });
+    expect(adminPoolCoffees(db, 2)).toEqual({ status: 'not_admin' });
+    db.close();
+  });
+
+  test("shows one pool coffee with the roaster's other pool coffees to merge into", () => {
+    const db = seeded();
+    const sasaba = coffeeOf(db, 'Ethiopia Sasaba');
+    expect(adminCoffee(db, 1, sasaba)).toMatchObject({
+      status: 'found',
+      roaster: 'Nord Kaffe',
+      facts: { name: 'Ethiopia Sasaba' },
+      bags: 1,
+      others: [{ name: 'Peru La Danta' }],
+    });
+    const secret = structuredClone(fixture.bags[1]);
+    secret.coffee.name = 'Secret Danta';
+    secret.personal = { private: true };
+    addBag(db, 3, secret);
+    const secretId = Number(db.prepare("SELECT id FROM coffee WHERE name = 'Secret Danta'").get()?.id);
+    expect(adminCoffee(db, 1, secretId)).toEqual({ status: 'not_found' });
+    expect(adminCoffee(db, 2, sasaba)).toEqual({ status: 'not_admin' });
     db.close();
   });
 });
