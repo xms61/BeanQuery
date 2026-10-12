@@ -1,18 +1,49 @@
 import { type Context, Hono } from 'hono';
+import { bagDetail } from '../../bag/library.js';
 import { deleteBag } from '../../bag/manage.js';
 import { makeBeanPrivate, publishBean } from '../../coffee/privacy.js';
-import { type Env, requireAccount } from '../context.js';
+import { type Env, requireAccount, todayFor } from '../context.js';
 import { AppPage } from '../layout.js';
 import { Differences } from './add.js';
 
 /** Deleting a bag, and making its bean private or publishing it to the pool. */
 export const bagActionRoutes = new Hono<Env>();
 
+/** The second step of deleting a bag: the bag page's Delete button links here, and this page posts the deletion. */
+bagActionRoutes.get('/bags/:id/delete', (c) => {
+  const accountId = requireAccount(c);
+  if (accountId instanceof Response) return accountId;
+  const bagId = bagIdOf(c);
+  const detail = bagDetail(c.var.config.db, accountId, bagId, todayFor(c, accountId));
+  if (detail === undefined) return c.notFound();
+  return c.html(
+    <AppPage title="Delete bag" section="library" admin={c.var.admin}>
+      <section class="card">
+        <h1>
+          Delete {detail.bag.coffee.name} from {detail.bag.roaster.name}?
+        </h1>
+        <p class="muted">
+          The bag goes, with its plan, rating and notes. Its coffee stays, in the pool or as your private coffee.
+        </p>
+        <form method="post" action={`/bags/${bagId}/delete`} class="actions">
+          <input type="hidden" name="confirm" value="yes" />
+          <button class="button danger" type="submit">
+            Delete bag
+          </button>
+          <a class="button secondary" href={`/bags/${bagId}`}>
+            Cancel
+          </a>
+        </form>
+      </section>
+    </AppPage>,
+  );
+});
+
 bagActionRoutes.post('/bags/:id/delete', async (c) => {
   const accountId = requireAccount(c);
   if (accountId instanceof Response) return accountId;
   const body = await c.req.parseBody();
-  if (body.confirm !== 'yes') return c.text('Tick the box to confirm.', 400);
+  if (body.confirm !== 'yes') return c.text('Confirm on the delete page.', 400);
   if (!deleteBag(c.var.config.db, accountId, bagIdOf(c))) return c.notFound();
   return c.redirect('/', 303);
 });
