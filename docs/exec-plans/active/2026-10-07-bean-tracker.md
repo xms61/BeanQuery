@@ -261,8 +261,8 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - [ ] Design in Figma, reviewed by the owner. Done 2026-10-07: tokens, text styles, components, and the Library, Bag detail and Add bag screens with the unregistered-roaster state, in light and dark. The owner ran the dark theme and the Add bag fixes through the Scripter plugin. Still to do: edit bag, the pool, roasters, account flows, admin, toasts and the Impressum
 - [ ] Contract: spec written 2026-10-07; JSON Schema, fixtures and the revised prompt still to do
 - [ ] Design docs written (accounts, web framework). The open questions were answered 2026-10-07
-- [ ] Database schema and migrations
-- [ ] Roaster registry imported from every.coffee
+- [ ] Database schema and migrations. The runner and the roaster tables (`roaster`, `roaster_alias`) exist in `src/db/migrate.ts`, ahead of the rest, because step 5 needs them; the other tables are still to do
+- [x] 2026-10-12 Roaster registry imported from every.coffee (`src/roaster/`, `pnpm roasters:import`). The live run loaded 9,152 roasters. Still to do: the owner tries a page saved from Firefox and from Chrome (see Surprises). In later steps: the upload and add-roaster screens (step 8) and the weekly job on the server (step 10)
 - [ ] Bags, import and export in the domain layer
 - [ ] Pool, matching and collective rating
 - [ ] Accounts by invitation, and admin
@@ -312,6 +312,10 @@ None right now. All were answered on 2026-10-07; see the Decision log.
   - **The account number** is 20 Crockford base32 characters, which is shorter to type than 31 digits.
   - **No passkeys in version 1.** A 90-day session that renews on use keeps sign-ins rare. Revisit if friends ask.
 - 2026-10-07: No privacy policy for a friends-only app; a joke Impressum signed "your friendly neighborhood brewer". Revisit if the app ever opens to the public.
+- 2026-10-12: A robots.txt answer other than 2xx, 404 or 410 is read as a refusal and stops the job, even though RFC 9309 lets a crawler go ahead on any 4xx. Being refused is what the owner wants honored. A missing robots.txt (404, 410) allows the fetch.
+- 2026-10-12: Roasters the admin adds get the slug `admin:<name key with hyphens>`, plus `-2`, `-3` on a clash. every.coffee slugs never contain a colon, so the import can't overwrite one. Two roasters may share a name, as 49 names do on every.coffee, so the admin is not stopped from adding a name that already exists.
+- 2026-10-12: When the page links a slug under a second spelling ("Sey Coffee" for `sey`), the first link, from the A to Z list, gives the name and the other spelling becomes a `roaster_alias` row. This stays within names and slugs.
+- 2026-10-12: Until the web layer exists, a saved copy is uploaded with `pnpm roasters:import --db <file> --file <saved page>`, which runs the same parser and import as the fetch. The command compiles with `tsc` into `dist/` first, because Node's type stripping doesn't map the `.js` import specifiers to `.ts` files.
 
 ## Surprises
 - 2026-10-07: every.coffee answered the agent's fetch tool with 403, but a plain `curl` with an honest user agent ("BeanQuery roaster sync (weekly, non-commercial)") got 200. The page was 7.6 MB, with 9,149 roaster slugs and 9,101 distinct names; 49 names have several slugs. Its product pages carry structured origin, variety and tasting notes.
@@ -343,6 +347,10 @@ None right now. All were answered on 2026-10-07; see the Decision log.
   - there was no way to create the first admin;
   - admin delete and merge could break bags;
   - toasts had no rules.
+- 2026-10-12: On resuming, step 4 was unticked but `src/db/migrate.ts` already held the migration runner and the roaster tables, with tests, and step 5 had tests for `roasterNameKey` and `isAllowedByRobots` with no code. None of it was committed. Step 5 was built on top; the rest of step 4 is still to do.
+- 2026-10-12: The saved page links 9 slugs twice: once in the A to Z list and once in a footer after it, sometimes under another spelling ("Sey" and "Sey Coffee"). That is why the page has 9,158 roaster links for 9,149 slugs.
+- 2026-10-12: The live fetch with Node's `fetch` and the honest user agent got 200 for both robots.txt and /roasters. It listed 9,152 roasters. Against the 2026-10-07 copy, 9 slugs were new and 6 had dropped off, and the 9,143 shared slugs had the same names. Importing the older copy afterwards added its 6 back and kept the 9 it lacked. The shared slugs matched by hand. `src/roaster/command.test.ts` checks that a saved copy gives the same rows as a fetch of the same page.
+- 2026-10-12: The fresh-context review found that the parser accepted only the server's markup (relative links in double quotes), so a page saved from a browser, with full URLs, would have been refused. It now also reads full every.coffee URLs, single quotes and upper-case tags. Saving the page from Firefox and Chrome and running `pnpm roasters:import --file` on each is still to be tried by the owner, since an agent can't use a browser's save dialog.
 
 ## Validation
 `pnpm verify` passes. The end-to-end test:
