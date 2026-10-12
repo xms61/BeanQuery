@@ -9,6 +9,7 @@ import {
   signOutEverywhere,
 } from '../../account/account.js';
 import { setTimeZone, timeZoneOf } from '../../account/time-zone.js';
+import { exportCsv } from '../../bag/csv.js';
 import { exportBags } from '../../bag/export.js';
 import { type Env, requireAccount, SESSION_DAYS, sessionCookieName, setSessionCookie } from '../context.js';
 import { AppPage, CardPage } from '../layout.js';
@@ -94,6 +95,17 @@ accountRoutes.get('/account/export.json', (c) => {
   return c.body(`${JSON.stringify(exportBags(config.db, accountId), null, 2)}\n`, 200, {
     'Content-Type': 'application/json; charset=utf-8',
     'Content-Disposition': `attachment; filename="beanquery-bags-${day}.json"`,
+  });
+});
+
+accountRoutes.get('/account/export.csv', (c) => {
+  const accountId = requireAccount(c);
+  if (accountId instanceof Response) return accountId;
+  const { config } = c.var;
+  const day = config.now().toISOString().slice(0, 10);
+  return c.body(exportCsv(config.db, accountId), 200, {
+    'Content-Type': 'text/csv; charset=utf-8',
+    'Content-Disposition': `attachment; filename="beanquery-bags-${day}.csv"`,
   });
 });
 
@@ -254,11 +266,14 @@ function AccountPage(props: { admin: boolean; bags: number; privateBags: number;
             <h2>Export and import</h2>
             <p class="muted small">
               Your export is your only backup: every bag with your plan, brew, rating and notes, private beans included.
-              It imports back into any account.
+              The JSON imports back into any account; the CSV, one row per bag, is for a spreadsheet.
             </p>
             <div class="actions">
               <a class="button" href="/account/export.json">
                 Download JSON
+              </a>
+              <a class="button secondary" href="/account/export.csv">
+                Download CSV
               </a>
             </div>
             <form method="post" action="/import" enctype="multipart/form-data" class="actions">

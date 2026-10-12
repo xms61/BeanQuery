@@ -181,6 +181,12 @@ describe('the account page', () => {
     expect(JSON.parse(await (await request('/account/export.json', { cookie: them.cookie })).text()).bags).toHaveLength(
       1,
     );
+
+    const csv = await request('/account/export.csv', { cookie: me.cookie });
+    expect(csv.headers.get('content-type')).toBe('text/csv; charset=utf-8');
+    expect(csv.headers.get('content-disposition')).toBe('attachment; filename="beanquery-bags-2026-10-12.csv"');
+    expect((await csv.text()).split('\r\n').filter(Boolean)).toHaveLength(3);
+    expect((await request('/account/export.csv')).status).toBe(303);
   });
 
   test('deletes the account only when confirmed, then signs out', async () => {
