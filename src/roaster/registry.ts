@@ -44,6 +44,50 @@ export function findRoasters(db: DatabaseSync, enteredName: string): Roaster[] {
     .map(toRoaster);
 }
 
+// Words roasters add to their names in some places and not others ("Tanat" and "Tanat Coffee Roasters").
+const fillerWords = new Set([
+  'the',
+  'coffee',
+  'coffees',
+  'roasters',
+  'roaster',
+  'roastery',
+  'roasting',
+  'roast',
+  'co',
+  'company',
+  'cafe',
+  'kaffe',
+  'kaffee',
+  'rosterei',
+  'kaffeerosterei',
+  'torrefacteur',
+  'torrefaction',
+]);
+
+const coreOf = (nameKey: string) =>
+  nameKey
+    .split(' ')
+    .filter((word) => word !== '' && !fillerWords.has(word))
+    .join(' ');
+
+/**
+ * Registered roasters whose names are close to an entered name that resolved to none: the same once filler words
+ * such as "Coffee" or "Roasters" are dropped, or one starting with the other. At most ten, in id order.
+ */
+export function suggestRoasters(db: DatabaseSync, enteredName: string): Roaster[] {
+  const entered = coreOf(roasterNameKey(enteredName));
+  if (entered === '') return [];
+  const isClose = (core: string) =>
+    core !== '' && (core === entered || core.startsWith(`${entered} `) || entered.startsWith(`${core} `));
+  return db
+    .prepare('SELECT id, name, name_key, slug, source FROM roaster ORDER BY id')
+    .all()
+    .filter((row) => isClose(coreOf(String(row.name_key))))
+    .slice(0, 10)
+    .map(toRoaster);
+}
+
 function toRoaster(row: Record<string, unknown> | undefined): Roaster {
   if (row === undefined) throw new Error('Expected a roaster row');
   return {
