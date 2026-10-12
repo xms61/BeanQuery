@@ -56,6 +56,7 @@ describe('setRoasterNote', () => {
 
     expect(setRoasterNote(db, 1, nord, 'x'.repeat(501))).toEqual({ status: 'too_long' });
     expect(setRoasterNote(db, 1, 999, 'Hi')).toEqual({ status: 'not_found' });
+    expect(setRoasterNote(db, 1, 999, 'x'.repeat(501))).toEqual({ status: 'not_found' });
     setRoasterNote(db, 1, nord, '   ');
     expect(db.prepare('SELECT count(*) AS n FROM roaster_note').get()).toEqual({ n: 0 });
     db.close();

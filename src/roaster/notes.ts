@@ -36,12 +36,14 @@ export function listRoasters(
     .filter(Boolean);
   const rows = db
     .prepare(
-      `SELECT r.id, r.name, r.name_key, r.slug, r.source, n.note,
-         (SELECT count(*) FROM bag b JOIN coffee c ON c.id = b.coffee_id
-          WHERE b.account_id = ?1 AND c.roaster_id = r.id) AS bags
+      // The account's bags are counted once per roaster and joined in: a count per roaster row would walk all its
+      // bags for each of the ~9,000 roasters, and node:sqlite blocks the server while it runs.
+      `SELECT r.id, r.name, r.name_key, r.slug, r.source, n.note, coalesce(bc.bags, 0) AS bags
        FROM roaster r
        LEFT JOIN roaster_note n ON n.roaster_id = r.id AND n.account_id = ?1
-       ORDER BY bags = 0, r.name_key, r.id`,
+       LEFT JOIN (SELECT c.roaster_id, count(*) AS bags FROM bag b JOIN coffee c ON c.id = b.coffee_id
+                  WHERE b.account_id = ?1 GROUP BY c.roaster_id) bc ON bc.roaster_id = r.id
+       ORDER BY bc.bags IS NULL, r.name_key, r.id`,
     )
     .all(accountId)
     .filter((row) => {
@@ -78,9 +80,9 @@ export function setRoasterNote(
   roasterId: number,
   note: string,
 ): { status: 'saved' } | { status: 'not_found' } | { status: 'too_long' } {
+  if (db.prepare('SELECT 1 FROM roaster WHERE id = ?').get(roasterId) === undefined) return { status: 'not_found' };
   const text = note.trim();
   if (text.length > maxNote) return { status: 'too_long' };
-  if (db.prepare('SELECT 1 FROM roaster WHERE id = ?').get(roasterId) === undefined) return { status: 'not_found' };
   if (text === '') {
     db.prepare('DELETE FROM roaster_note WHERE account_id = ? AND roaster_id = ?').run(accountId, roasterId);
   } else {

@@ -83,6 +83,8 @@ describe('the roasters', () => {
       (await request(`/roasters/${nord}/note`, { form: { note: 'x'.repeat(501) }, cookie: me.cookie })).status,
     ).toBe(400);
     expect((await request('/roasters/99999', { cookie: me.cookie })).status).toBe(404);
+    const long = { note: 'x'.repeat(501) };
+    expect((await request('/roasters/99999/note', { form: long, cookie: me.cookie })).status).toBe(404);
   });
 });
 

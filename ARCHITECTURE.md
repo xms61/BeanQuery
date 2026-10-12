@@ -15,12 +15,12 @@ BeanQuery is a TypeScript app on Node 26 that keeps its data in one SQLite file 
 | `src/db/migrate.ts` | The schema, as numbered migrations applied once each by `migrate` |
 | `src/account/` | Anonymous accounts: account numbers, invites, sessions, time zones, deleting an account, and `pnpm admin`, the only code that makes admins |
 | `src/admin/` | The owner's tools, each refused to non-admins: invites, the account list and deleting an account, roasters and aliases, and editing, merging, deleting and undoing edits of pool coffees |
-| `src/bag/` | One account's bags: import of a pasted or uploaded document, manual entry, edits, re-paste, state, delete, export, the library with phases and filters, and the reminders |
-| `src/coffee/` | Coffees: the name key and close matches, editing facts, "Use mine" and moving a bag, pool search, the collective rating, and making a bean private or public |
+| `src/bag/` | One account's bags: import of a pasted or uploaded document, manual entry, edits, re-paste, state, delete, export, the library with phases and filters, the reminders, and the gear: grinders with rename, note and delete |
+| `src/coffee/` | Coffees: the name key and close matches, editing facts, "Use mine" and moving a bag, pool search with the pool page and a coffee's page, the collective rating, and making a bean private or public |
 | `src/contract/` | The bag JSON contract as one Zod definition: validation by field path, and the generated JSON Schema in `docs/generated/` |
 | `src/web/` | The web layer on Hono: the server, sessions and security headers, rate limits, the pages (server-rendered JSX) and their routes |
 | `src/layers.test.ts` | The layer rule below, as a test |
-| `src/roaster/` | The roaster registry: fetching and parsing every.coffee/roasters, importing it by slug, the admin's own roasters, and the `pnpm roasters:import` command |
+| `src/roaster/` | The roaster registry: fetching and parsing every.coffee/roasters, importing it by slug, the admin's own roasters, each account's private roaster notes, and the `pnpm roasters:import` command |
 | `scripts/` | Repo tooling: the doc and tracked-file checks, the agent guard hook, setup |
 | `docs/` | The system of record ([KNOWLEDGE_BASE.md](docs/KNOWLEDGE_BASE.md)) |
 
