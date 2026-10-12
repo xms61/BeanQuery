@@ -18,6 +18,7 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc",
     "roasters:import": "tsc && node dist/roaster/cli.js",
+    "contract:schema": "tsc && node dist/contract/write-schema.js",
     "test": "vitest run",
     "test:scripts": "node --test \"scripts/**/*.test.mjs\""
   },
@@ -26,5 +27,8 @@
     "@types/node": "26.6.4",
     "typescript": "7.0.2",
     "vitest": "5.0.3"
+  },
+  "dependencies": {
+    "zod": "4.6.5"
   }
 }

@@ -1,11 +1,11 @@
 ---
 status: draft
-last-verified: 2026-10-07
+last-verified: 2026-10-12
 ---
 
 # Bag JSON contract, `beanquery.bags/v1`
 
-The format BeanQuery imports and exports bags in. A user pastes it from an LLM chat, and the export writes it, so an export imports back into any account. This contract is the source of truth: a prompt that produces the JSON follows it, never the other way round. Nothing here is implemented yet; the [bean tracker plan](../exec-plans/active/2026-10-07-bean-tracker.md) schedules it.
+The format BeanQuery imports and exports bags in. A user pastes it from an LLM chat, and the export writes it, so an export imports back into any account. This contract is the source of truth: a prompt that produces the JSON follows it, never the other way round. Validation is implemented in [src/contract/bag-json.ts](../../src/contract/bag-json.ts), the one definition the importer uses. The [JSON Schema](../generated/bag-json-contract.schema.json) is generated from it with the paste limits, by `pnpm contract:schema`; change the definition and this spec together. Saving bags is scheduled in the [bean tracker plan](../exec-plans/active/2026-10-07-bean-tracker.md).
 
 ## Example
 ```json
@@ -79,7 +79,7 @@ The format BeanQuery imports and exports bags in. A user pastes it from an LLM c
 | `coffee.process.printed` | text or null | yes | The exact process wording |
 | `coffee.process.category` | `washed`, `natural`, `honey`, `anaerobic`, `other` or null | yes | The process family; null when no process is stated |
 | `coffee.altitude.printed` | text or null | yes | As printed |
-| `coffee.altitude.min_m`, `max_m` | whole metres or null | yes | Both the same for a single value. `min_m` is at most `max_m` |
+| `coffee.altitude.min_m`, `max_m` | whole metres from 0, or null | yes | Both set or both null; the same for a single value. `min_m` is at most `max_m` |
 | `coffee.tasting_notes` | list of text | yes | The roaster's notes as printed |
 | `coffee.decaf` | true or false | yes | True only when the bag says decaf |
 | `harvest` | text or null | yes | This bag's harvest as printed, for example `2025/26`. Every harvest of a coffee belongs to the same coffee |

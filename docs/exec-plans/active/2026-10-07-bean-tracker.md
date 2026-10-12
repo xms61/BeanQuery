@@ -225,7 +225,7 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - [x] 2026-10-07 Research: reference lists, an existing tracker's model, water units, intake options
 - [x] 2026-10-07 Owner answered three rounds of questions, and delegated the rest (see Decision log)
 - [ ] Design in Figma, reviewed by the owner. Done 2026-10-07: tokens, text styles, components, and the Library, Bag detail and Add bag screens with the unregistered-roaster state, in light and dark. The owner ran the dark theme and the Add bag fixes through the Scripter plugin. Still to do: edit bag, the pool, roasters, account flows, admin, toasts and the Impressum
-- [ ] Contract: spec written 2026-10-07; JSON Schema, fixtures and the revised prompt still to do
+- [ ] Contract: spec written 2026-10-07. Done 2026-10-12: the Zod definition and validation in `src/contract/bag-json.ts`, and the generated JSON Schema in `docs/generated/`. Still to do, by the owner: fixtures from three real bags, and the revised prompt
 - [x] 2026-10-12 Design docs written: [account model](../../design-docs/account-model.md) and [web framework](../../design-docs/web-framework.md)
 - [x] 2026-10-12 Database schema and migrations: every table of the draft data model, in `src/db/migrate.ts`, tested in `src/db/schema.test.ts`
 - [x] 2026-10-12 Roaster registry imported from every.coffee (`src/roaster/`, `pnpm roasters:import`). The live run loaded 9,152 roasters. Still to do: the owner tries a page saved from Firefox and from Chrome (see Surprises). In later steps: the upload and add-roaster screens (step 8) and the weekly job on the server (step 10)
@@ -294,6 +294,8 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - 2026-10-12: Columns the draft didn't list stay out until a step needs them. For example, the collective rating's "latest rated bag" needs a rating date, which step 7 adds in its own migration.
 - 2026-10-12: The web framework is Hono, rendering pages on the server with its JSX, with no client-side framework; see the [web framework](../../design-docs/web-framework.md) design doc. The owner chose it. Rejected: Fastify with templates, SvelteKit, Astro.
 - 2026-10-12: The contract is defined once with Zod 4, which gives the importer's validation with field-path errors and generates the JSON Schema (`z.toJSONSchema`). The owner approved the dependency. Rejected: Valibot, which needs a second package for JSON Schema, and a hand-written validator with a JSON Schema kept in sync by a test.
+- 2026-10-12: The contract now says altitude is whole metres from 0, with both bounds set or both null, as the schema already enforced. Altitudes below sea level don't occur for coffee.
+- 2026-10-12: Until the owner's three real bags arrive as fixtures, a test validates the example in the contract spec itself, so the spec and the definition can't drift apart.
 
 ## Surprises
 - 2026-10-07: every.coffee answered the agent's fetch tool with 403, but a plain `curl` with an honest user agent ("BeanQuery roaster sync (weekly, non-commercial)") got 200. The page was 7.6 MB, with 9,149 roaster slugs and 9,101 distinct names; 49 names have several slugs. Its product pages carry structured origin, variety and tasting notes.
@@ -329,6 +331,8 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - 2026-10-12: The saved page links 9 slugs twice: once in the A to Z list and once in a footer after it, sometimes under another spelling ("Sey" and "Sey Coffee"). That is why the page has 9,158 roaster links for 9,149 slugs.
 - 2026-10-12: The live fetch with Node's `fetch` and the honest user agent got 200 for both robots.txt and /roasters. It listed 9,152 roasters. Against the 2026-10-07 copy, 9 slugs were new and 6 had dropped off, and the 9,143 shared slugs had the same names. Importing the older copy afterwards added its 6 back and kept the 9 it lacked. The shared slugs matched by hand. `src/roaster/command.test.ts` checks that a saved copy gives the same rows as a fetch of the same page.
 - 2026-10-12: The fresh-context review found that the parser accepted only the server's markup (relative links in double quotes), so a page saved from a browser, with full URLs, would have been refused. It now also reads full every.coffee URLs, single quotes and upper-case tags. Saving the page from Firefox and Chrome and running `pnpm roasters:import --file` on each is still to be tried by the owner, since an agent can't use a browser's save dialog.
+- 2026-10-12: pnpm refused Zod 4.6.6, published the day before, under its three-day `minimumReleaseAge`. Zod 4.6.5 (2026-09-13) is pinned instead. Dependabot will offer 4.6.6 once it is old enough.
+- 2026-10-12: For step 6: the contract accepts `roaster_notes` that name one roaster twice, by the same slug or by two spellings that resolve to it, but `roaster_note` keys on account and roaster. The save has to merge or reject such duplicates after resolving the roasters.
 
 ## Validation
 `pnpm verify` passes. The end-to-end test:
