@@ -16,6 +16,8 @@
     "lint": "biome check .",
     "format": "biome check --write .",
     "typecheck": "tsc --noEmit",
+    "build": "tsc",
+    "roasters:import": "tsc && node dist/roaster/cli.js",
     "test": "vitest run",
     "test:scripts": "node --test \"scripts/**/*.test.mjs\""
   },

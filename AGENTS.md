@@ -32,6 +32,7 @@ This file is the map, not the manual: it says which doc to read for which task. 
 | Run locally | Not yet: the web app's framework is still to be chosen |
 | Lint and format | `pnpm lint` to check (Biome), `pnpm format` to fix |
 | Typecheck | `pnpm typecheck` |
+| Import roasters from every.coffee, or from a saved copy | `pnpm roasters:import --db <file>` (add `--file <saved page>` for a saved copy) |
 | Tests, all and one file | `pnpm test`, `pnpm vitest run src/db.test.ts` |
 
 ## How to work
