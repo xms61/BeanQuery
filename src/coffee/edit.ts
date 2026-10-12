@@ -9,6 +9,9 @@ export type CoffeeEditResult =
   | { status: 'name_taken'; coffeeId: number }
   | { status: 'invalid'; errors: ContractError[] };
 
+/** What writing facts can return: everything but the access refusal, which the caller decides. */
+export type CoffeeWriteResult = Exclude<CoffeeEditResult, { status: 'not_allowed' }>;
+
 // A coffee's single-value facts, in the order edits are applied and logged, with how each is read from the form.
 const scalarFacts: [column: string, read: (facts: CoffeeFacts) => SQLInputValue][] = [
   ['name', (f) => f.name],
@@ -60,7 +63,24 @@ export function applyCoffeeEdit(
 ): CoffeeEditResult {
   const denied = checkAccess(db, accountId, coffeeId);
   if (denied !== undefined) return denied;
-  const row = db.prepare('SELECT * FROM coffee WHERE id = ?').get(coffeeId) as Record<string, SQLInputValue>;
+  return writeCoffeeFacts(db, accountId, coffeeId, facts);
+}
+
+/**
+ * Writes a coffee's facts and logs each changed field of a pool coffee under the editor's account, without checking
+ * who may edit it: callers do that first. Used by the user's edit and by the admin's edit and undo.
+ */
+export function writeCoffeeFacts(
+  db: DatabaseSync,
+  editorId: number,
+  coffeeId: number,
+  facts: CoffeeFacts,
+): CoffeeWriteResult {
+  const row = db.prepare('SELECT * FROM coffee WHERE id = ?').get(coffeeId) as
+    | Record<string, SQLInputValue>
+    | undefined;
+  if (row === undefined) return { status: 'not_found' };
+  const accountId = row.owner_account_id === null ? editorId : Number(row.owner_account_id);
   const inPool = row.owner_account_id === null;
 
   const nameKey = coffeeNameKey(facts.name);
@@ -81,7 +101,7 @@ export function applyCoffeeEdit(
     db.prepare(
       `INSERT INTO coffee_edit (coffee_id, account_id, field, old_value, new_value, edited_on)
        VALUES (?, ?, ?, ?, ?, date('now'))`,
-    ).run(coffeeId, accountId, field, oldValue, newValue);
+    ).run(coffeeId, editorId, field, oldValue, newValue);
   };
 
   for (const [column, read] of scalarFacts) {
@@ -121,6 +141,15 @@ export function useMine(
   const denied = checkAccess(db, accountId, coffeeId);
   if (denied !== undefined) return denied;
   const facts = readCoffee(db, coffeeId) as CoffeeFacts;
+  setFact(facts, field, yours);
+  return editCoffee(db, accountId, coffeeId, facts);
+}
+
+/**
+ * Sets one field of a coffee's facts from its logged form: text, a number as text, `true` or `false`, or a list as
+ * JSON, as `coffee_edit` rows and paste differences carry it. Throws for a name that is not a coffee fact.
+ */
+export function setFact(facts: CoffeeFacts, field: string, value: string | null): void {
   const text = (value: string | null) => value;
   const setters: Record<string, (value: string | null) => void> = {
     name: (v) => {
@@ -165,8 +194,7 @@ export function useMine(
   };
   const set = Object.hasOwn(setters, field) ? setters[field] : undefined;
   if (set === undefined) throw new Error(`${field} is not a coffee fact`);
-  set(yours);
-  return editCoffee(db, accountId, coffeeId, facts);
+  set(value);
 }
 
 /**
@@ -256,10 +284,14 @@ function asText(column: string, value: SQLInputValue): string | null {
   return String(value);
 }
 
-/** A list as JSON from a difference. Anything else becomes a value the contract check will refuse. */
+/**
+ * A list as JSON from a difference or the edit log. No value is the empty list, as an edit that filled an empty list
+ * logs it. Anything else becomes a value the contract check will refuse.
+ */
 function parseList(value: string | null): string[] {
+  if (value === null) return [];
   try {
-    const list: unknown = JSON.parse(value ?? 'null');
+    const list: unknown = JSON.parse(value);
     return Array.isArray(list) ? list : (value as unknown as string[]);
   } catch {
     return value as unknown as string[];
