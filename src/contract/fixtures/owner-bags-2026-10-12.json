@@ -48,7 +48,7 @@
         "varieties": ["Caturra", "Bourbon", "Catimor", "Pache"],
         "process": { "printed": "Natural", "category": "natural" },
         "altitude": { "printed": null, "min_m": null, "max_m": null },
-        "tasting_notes": ["Black berries", "Violet", "Dark chocolate"],
+        "tasting_notes": ["Blackberry", "Violet", "Dark chocolate"],
         "decaf": false
       },
       "harvest": null,
@@ -81,7 +81,7 @@
         "farm": "Elida Estate",
         "producer": null,
         "varieties": ["Catuai"],
-        "process": { "printed": "Anaerobic Natural Slow Dry (ASD)", "category": "anaerobic" },
+        "process": { "printed": "Anaerobic natural slow dry (ASD)", "category": "anaerobic" },
         "altitude": { "printed": "1600-1700m", "min_m": 1600, "max_m": 1700 },
         "tasting_notes": ["Blackcurrant liqueur", "Black cherry", "Cacao liqueur"],
         "decaf": false
@@ -116,7 +116,7 @@
         "farm": null,
         "producer": "Marcus Duran",
         "varieties": ["Geisha"],
-        "process": { "printed": "Honey Anaerobic", "category": "anaerobic" },
+        "process": { "printed": "Honey anaerobic", "category": "anaerobic" },
         "altitude": { "printed": "1600-1700m", "min_m": 1600, "max_m": 1700 },
         "tasting_notes": ["Rivesaltes", "Lychee", "Candied papaya"],
         "decaf": false
@@ -151,7 +151,7 @@
         "farm": null,
         "producer": "Tamiru Tadesse",
         "varieties": ["74158"],
-        "process": { "printed": "Anaerobic Natural - 72h fermentation", "category": "anaerobic" },
+        "process": { "printed": "Anaerobic natural, 72h fermentation", "category": "anaerobic" },
         "altitude": { "printed": "+2200m", "min_m": null, "max_m": null },
         "tasting_notes": ["Pineapple", "Kiwi", "Milk chocolate"],
         "decaf": false
