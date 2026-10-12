@@ -233,7 +233,7 @@ describe('the first admin', () => {
     db.close();
   });
 
-  test('is the only way to set is_admin: only the bootstrap and the schema mention it', () => {
+  test('is the only way to set is_admin: only the bootstrap writes it, and only the schema and the admin check mention it', () => {
     const sources = (dir: string): string[] =>
       readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
         entry.isDirectory()
@@ -249,6 +249,10 @@ describe('the first admin', () => {
       .filter((path) => readFileSync(path, 'utf8').includes('is_admin'))
       .map((path) => relative(src, path).split(sep).join('/'))
       .sort();
-    expect(mentions).toEqual(['account/bootstrap.ts', 'db/migrate.ts']);
+    expect(mentions).toEqual(['account/bootstrap.ts', 'admin/admin.ts', 'db/migrate.ts']);
+    // The admin tools only read it: they never insert or update an account row.
+    expect(readFileSync(join(src, 'admin', 'admin.ts'), 'utf8')).not.toMatch(
+      /(INSERT\s+(OR\s+\w+\s+)?INTO|UPDATE|REPLACE\s+INTO)\s+account\b/i,
+    );
   });
 });

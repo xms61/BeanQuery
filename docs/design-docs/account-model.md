@@ -33,6 +33,13 @@ Passkeys come later. The tables are `account`, `invite` and `session` in [src/db
 **The admin**
 - A server command, run over SSH, creates the first admin account on an empty database and prints its number once: `pnpm admin create-admin`. On a database that has accounts it needs `--another`, for when the owner loses theirs. `pnpm admin create-invite` creates invites.
 - No web route can set `is_admin`.
+- The admin's tools (`src/admin/`) each check that the acting account is an admin and refuse otherwise:
+  - create invites and see how many are open;
+  - list accounts by the first 8 hex digits of the key hash, with the created and last-seen dates, and delete any account but their own (they delete their own from the account page, so a list click can't lock out the last admin);
+  - add roasters and other spellings of a roaster;
+  - edit a pool coffee, see its edit log with who edited, and undo any edit. An undo is logged as an edit, so it can be undone too. Undoing a rename onto a name another pool coffee has taken since is refused;
+  - merge two pool coffees of the same roaster: the bags and harvests move to the one kept, whose facts stay as they are;
+  - delete a pool coffee: each account's bags move to its own private coffee of that name, or to a private copy, as when a user makes the bean private. No bag is lost.
 
 **Export** writes the user's bags as JSON in the [bag JSON contract](../product-specs/bag-json-contract.md), with each bag's `personal` block, and as CSV. The JSON imports back into any account.
 
