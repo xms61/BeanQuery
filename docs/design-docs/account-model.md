@@ -15,13 +15,13 @@ Passkeys come later. The tables are `account`, `invite` and `session` in [src/db
 
 ## How it works
 **Invites**
-- The admin creates a single-use code that expires after 14 days, and sends it to a friend however they like.
+- The admin creates a single-use code of 12 Crockford base32 characters (60 bits) that expires after 14 days, and sends it to a friend however they like. An unknown, used or expired code all get the same answer.
 - The friend redeems it, and the server shows them a new account number once. The admin never sees it.
 - The server deletes the invite on redemption and stores no link between the two. Accounts and open invites carry dates only, never times. The admin sees only how many invites are open.
 
 **The account number**
 - A random 100-bit secret, shown once as 20 Crockford base32 characters in groups of four (`K7QF 3M9X TR2D 8HVW PC4N`).
-- Crockford base32 leaves out I, L, O and U, so no character can be misread. Input ignores case, spaces and dashes.
+- Crockford base32 leaves out I, L, O and U, so no character can be misread. Input ignores case, spaces and dashes, and reads I, L and O as 1, 1 and 0, as Crockford base32 does, so a misread character still works.
 - The database stores only its SHA-256 hash. A random secret this long can't be found from its hash, so no server-side pepper is needed, and losing a pepper can't lock every account out at once.
 - Redeeming asks the user to copy the number, download it as a file or print it, and to tick "I saved it". There is no recovery, by design. A user who loses it gets a new invite and imports their last export.
 
@@ -31,7 +31,7 @@ Passkeys come later. The tables are `account`, `invite` and `session` in [src/db
 - Sign-in and redemption are rate-limited. Invites replace the sign-up abuse limits a public app would need.
 
 **The admin**
-- A server command, run over SSH, creates the first admin account on an empty database and prints its number once. The same command creates invites, or a new admin account when the owner loses theirs.
+- A server command, run over SSH, creates the first admin account on an empty database and prints its number once: `pnpm admin create-admin`. On a database that has accounts it needs `--another`, for when the owner loses theirs. `pnpm admin create-invite` creates invites.
 - No web route can set `is_admin`.
 
 **Export** writes the user's bags as JSON in the [bag JSON contract](../product-specs/bag-json-contract.md), with each bag's `personal` block, and as CSV. The JSON imports back into any account.
