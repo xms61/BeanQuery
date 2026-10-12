@@ -21,7 +21,7 @@ import type { ContractError } from '../../contract/bag-json.js';
 import { findRoasters, type Roaster } from '../../roaster/registry.js';
 import { CoffeeFormFields, coffeeToForm, FormErrors, type FormValues, formToBag, readForm } from '../bag-form.js';
 import { type Env, requireAccount } from '../context.js';
-import { longDate } from '../format.js';
+import { fullDate, longDate } from '../format.js';
 import { AppPage } from '../layout.js';
 import { fieldLabels } from './add.js';
 
@@ -296,7 +296,8 @@ function InvitesPage(props: { c: Context<Env>; invite?: { code: string; expiresO
                     {account.admin && <span class="muted small"> admin</span>}
                   </th>
                   <td>
-                    <span class="muted small">last seen</span> {longDate(account.lastSeenOn)}
+                    <span class="muted small">since</span> {fullDate(account.createdOn)},{' '}
+                    <span class="muted small">last seen</span> {fullDate(account.lastSeenOn)}
                   </td>
                   <td>
                     {account.accountId !== adminId && (

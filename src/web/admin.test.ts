@@ -116,6 +116,20 @@ describe('the admin screens', () => {
     expect(refused.status).toBe(400);
     expect(await refused.text()).toContain('Found no roaster links');
   });
+
+  test('take a saved page past the 1 MB form limit, up to 20 MB, and only from an admin', async () => {
+    const { request, adminCookie, friend } = await withAdmin();
+    const upload = (bytes: number, cookie: string) => {
+      const form = new FormData();
+      form.set('file', new File(['x'.repeat(bytes)], 'roasters.html', { type: 'text/html' }));
+      return request('/admin/roasters/upload', { multipart: form, cookie });
+    };
+    // Past the form limit but no roaster links: the parser answers, not the size limit. The real page is about 8 MB.
+    expect((await upload(2 * 1024 * 1024, adminCookie)).status).toBe(400);
+    expect((await upload(22 * 1024 * 1024, adminCookie)).status).toBe(413);
+    // The admin check comes before the body is read.
+    expect((await upload(2 * 1024 * 1024, friend.cookie)).status).toBe(404);
+  });
 });
 
 describe('pool coffees in the admin', () => {

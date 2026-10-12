@@ -6,10 +6,11 @@ export interface RoasterListing {
   otherNames: string[];
 }
 
-// Relative or full every.coffee links, in either quote and any case, as a browser may save them. The link text is
-// capped, so an upload full of unclosed links is still read in linear time.
+// Relative or full every.coffee links, in either quote and any case, as a browser may save them. Each part of a match
+// stops early: the tag at the next < or >, the link text at the next link (links don't nest) or after 1,000
+// characters. So an upload full of tags or links that never close is still read in linear time.
 const roasterLink =
-  /<a\b[^>]*?\bhref\s*=\s*(["'])(?:https?:\/\/(?:www\.)?every\.coffee)?\/roaster\/([a-z0-9-]+)\1[^>]*>((?:[^<]|<(?!\/a\s*>)){0,1000}?)<\/a\s*>/gi;
+  /<a\b[^<>]*?\bhref\s*=\s*(["'])(?:https?:\/\/(?:www\.)?every\.coffee)?\/roaster\/([a-z0-9-]+)\1[^<>]*>((?:[^<]|<(?!\/a\s*>|a\b)){0,1000}?)<\/a\s*>/gi;
 
 /**
  * Reads every `/roaster/<slug>` link on a saved or fetched copy of every.coffee/roasters. A slug can be linked
