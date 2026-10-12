@@ -5,15 +5,23 @@ import { csrf } from 'hono/csrf';
 import { HTTPException } from 'hono/http-exception';
 import { secureHeaders } from 'hono/secure-headers';
 import { accountForSession } from '../account/account.js';
+import { isTimeZone } from '../account/time-zone.js';
 import { isAdmin } from '../admin/admin.js';
 import { appScript, styleSheet } from './assets/style.js';
 import { type Env, type Limits, sessionCookieName, setSessionCookie, type WebConfig } from './context.js';
 import { AppPage, CardPage } from './layout.js';
 import { RateLimiter } from './rate-limit.js';
 import { accountRoutes } from './routes/account.js';
+import { libraryRoutes } from './routes/library.js';
 import { pageRoutes } from './routes/pages.js';
 
 export function createApp(config: WebConfig): Hono<Env> {
+  // Checked here, at start, so a typo stops the server instead of failing every signed-in page later.
+  if (!isTimeZone(config.defaultTimeZone)) {
+    throw new Error(
+      `DEFAULT_TIME_ZONE ${JSON.stringify(config.defaultTimeZone)} is not a time zone, such as Europe/Berlin`,
+    );
+  }
   const app = new Hono<Env>();
   // Ten sign-ins per quarter hour, and five invite codes per hour, per client.
   const limits: Limits = { signIn: new RateLimiter(10, 15 * 60_000), redeem: new RateLimiter(5, 60 * 60_000) };
@@ -78,6 +86,7 @@ export function createApp(config: WebConfig): Hono<Env> {
   );
 
   app.route('/', accountRoutes);
+  app.route('/', libraryRoutes);
   app.route('/', pageRoutes);
 
   // Logged without the request, so no address, cookie or pasted text reaches the log; the page says nothing internal.

@@ -65,7 +65,8 @@ describe('the layer rule, db → domain → web', () => {
 
   test('the web layer runs no SQL of its own', () => {
     const broken = sources
-      .filter((path) => layerOf(path) === 'web' && !/\.test\.tsx?$/.test(path))
+      // Tests and their shared setup may seed data directly.
+      .filter((path) => layerOf(path) === 'web' && !/(\.test\.tsx?|test-support\.ts)$/.test(path))
       .filter((path) => /\.(prepare|exec)\(/.test(readFileSync(path, 'utf8')))
       .map(name);
     expect(broken, 'Put the query in a domain module and call that from the route').toEqual([]);

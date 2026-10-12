@@ -18,6 +18,7 @@ migrate(db);
 const app = createApp({
   db,
   now: () => new Date(),
+  defaultTimeZone: process.env.DEFAULT_TIME_ZONE || 'UTC',
   secureCookies: process.env.SECURE_COOKIES !== 'false',
   ...(process.env.PUBLIC_ORIGIN ? { origin: process.env.PUBLIC_ORIGIN } : {}),
   clientKey: clientKeyFrom(process.env.TRUST_PROXY === 'true'),
