@@ -138,6 +138,8 @@ input.wide { width: 100%; }
 }
 .note { border: 1px solid var(--phase-rested); border-radius: 8px; padding: 12px 16px; margin: 16px 0; }
 
+[hidden] { display: none !important; }
+[data-live-region] { display: contents; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .display { font-size: 44px; line-height: 48px; letter-spacing: -1.5px; }
 .crumbs { margin-bottom: 20px; }
@@ -271,6 +273,52 @@ for (const input of document.querySelectorAll('[data-time-zone]')) {
 for (const button of document.querySelectorAll('[data-print]')) {
   button.hidden = false;
   button.addEventListener('click', () => window.print());
+}
+
+// A filter or search applies as it changes: a select at once, typing after a pause. The page is fetched with the
+// form's query and its live regions swapped in, so the form and the focus stay; the address follows the query.
+for (const form of document.querySelectorAll('form[data-live]')) {
+  for (const button of form.querySelectorAll('button[type="submit"]')) button.hidden = true;
+  let timer;
+  let latest = 0;
+  const apply = async () => {
+    clearTimeout(timer);
+    const url = new URL(form.action);
+    url.search = new URLSearchParams([...new FormData(form)].filter(([, value]) => value !== '')).toString();
+    const request = ++latest;
+    try {
+      const response = await fetch(url);
+      if (request !== latest) return;
+      if (!response.ok || response.redirected) return location.assign(response.url);
+      const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+      if (request !== latest) return;
+      for (const region of document.querySelectorAll('[data-live-region]')) {
+        const fresh = page.querySelector('[data-live-region="' + region.dataset.liveRegion + '"]');
+        if (fresh) region.replaceWith(document.adoptNode(fresh));
+      }
+      history.replaceState(null, '', url);
+    } catch {
+      if (request === latest) location.assign(url);
+    }
+  };
+  form.addEventListener('change', (event) => {
+    if (event.target instanceof HTMLSelectElement) apply();
+  });
+  form.addEventListener('input', (event) => {
+    if (!(event.target instanceof HTMLInputElement)) return;
+    clearTimeout(timer);
+    timer = setTimeout(apply, 300);
+  });
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    apply();
+  });
+}
+
+// A select that saves one choice, such as a bag's state or the theme, saves as soon as it changes.
+for (const form of document.querySelectorAll('form[data-auto-submit]')) {
+  for (const button of form.querySelectorAll('button[type="submit"]')) button.hidden = true;
+  form.addEventListener('change', () => form.requestSubmit());
 }
 `;
 

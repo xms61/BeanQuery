@@ -3,7 +3,7 @@ import { bagDetail, type LibraryBag, type LibraryFilter, library, type Phase } f
 import { type BagState, setBagState } from '../../bag/manage.js';
 import { dismissMidPeak, type Reminder, reminders } from '../../bag/reminders.js';
 import { bagToForm, VerdictFields } from '../bag-form.js';
-import { Legend, PhasePill, PlanBar, RatingBeans } from '../components.js';
+import { Legend, LiveRegion, PhasePill, PlanBar, RatingBeans } from '../components.js';
 import { type Env, requireAccount, todayFor } from '../context.js';
 import {
   addDays,
@@ -43,13 +43,15 @@ libraryRoutes.get('/', (c) => {
       {due.length > 0 && <Toasts due={due} today={today} />}
       {due.length + comingUp.length > 0 && <ComingUp due={due} comingUp={comingUp} today={today} />}
       <Filters filter={filter} options={options} />
-      {bags.length === 0 ? (
-        <section class="card">
-          <p class="muted">{total === 0 ? 'No bags yet.' : 'No bag matches these filters.'}</p>
-        </section>
-      ) : (
-        <LibraryTable bags={bags} />
-      )}
+      <LiveRegion name="results">
+        {bags.length === 0 ? (
+          <section class="card">
+            <p class="muted">{total === 0 ? 'No bags yet.' : 'No bag matches these filters.'}</p>
+          </section>
+        ) : (
+          <LibraryTable bags={bags} />
+        )}
+      </LiveRegion>
       <Legend />
     </AppPage>,
   );
@@ -206,7 +208,7 @@ function Filters(props: {
   );
   const rating = filter.minRating === undefined ? undefined : String(filter.minRating);
   return (
-    <form class="filters" method="get" action="/">
+    <form class="filters" method="get" action="/" data-live>
       {select('state', 'All bags', filter.state, [
         ['active', 'Not finished'],
         ['finished', 'Finished'],
