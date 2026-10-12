@@ -8,7 +8,7 @@ last-verified: 2026-10-12
 How BeanQuery gets onto the owner's VPS and stays current. Why it is built this way: [hosting and deploy](design-docs/hosting-and-deploy.md). Commands marked *owner machine* run in the repo on the development machine; the others run on the VPS over SSH as the `deploy` user. Real domains, addresses and folders go in `.env` files and on the VPS, never in this doc.
 
 ## Status
-Not deployed yet. The image, the compose file, the Caddy site and the timers are in the repo ([deploy plan](exec-plans/active/2026-10-12-deploy.md)). The first deploy waits for the ysto change below and the owner's run of this runbook.
+Deployed. The owner's VPS has served BeanQuery on its domain since 0.1.0 (2026-10-12), behind ysto 1.31.0's Caddy, and the owner has signed in as admin. Still to do from this runbook: the timers (step 7), the [checks after setup](#checks-after-setup) and the first [restore drill](#restore-drill) ([deploy plan](exec-plans/active/2026-10-12-deploy.md)).
 
 ## What runs where
 - **The VPS** is the one that runs ysto, set up by ysto's runbook (its `docs/DEPLOY.md`): Ubuntu with Docker, keys-only SSH, ufw and the Hetzner firewall allowing 22, 80 and 443 only, and unattended security updates. Nothing in that setup changes.
@@ -27,7 +27,7 @@ This needs ysto's release that lets its Caddy import site files and join `edge`.
 docker network create edge
 sudo mkdir -p /opt/caddy-sites && sudo chown deploy:deploy /opt/caddy-sites
 ```
-Update ysto's deploy files and restart it as its runbook says. ysto keeps working with the sites folder empty.
+A ysto release does not change the files on the VPS: copy its new `deploy/compose.yml` and `deploy/Caddyfile` to `/opt/ysto/` (ysto's step 3), then `cd /opt/ysto && docker compose up -d`. Check with `docker compose exec caddy ls /etc/caddy/sites` in `/opt/ysto`: it lists the folder's files once Caddy mounts it. ysto keeps working with the folder empty.
 
 ### 3. Folders and settings
 ```bash
@@ -44,7 +44,7 @@ scp -r deploy/systemd deploy@<server>:beanquery-units
 ```
 On the VPS:
 - In `/opt/beanquery/.env`, set `PUBLIC_ORIGIN` to `https://<domain>`. The other defaults match the folders above.
-- In `/opt/caddy-sites/beanquery.caddy`, replace `beans.example.org` with the domain.
+- In `/opt/caddy-sites/beanquery.caddy`, replace `beans.example.org` with the domain: `sed -i 's/beans.example.org/<domain>/' /opt/caddy-sites/beanquery.caddy`. With the placeholder left in, HTTPS to the domain fails with `tlsv1 alert internal error`, since Caddy has no certificate for it.
 
 ### 4. The image
 The first release makes the GHCR package `ghcr.io/xms61/beanquery` ([Release and update](#release-and-update)). It is private at first: in its package settings on GitHub, set the visibility to public once. The image holds no data and no secret, and CI checks that it holds no database or `.env` file.
@@ -63,6 +63,7 @@ curl -fsS https://<domain>/healthz
 It answers `ok`. If not, `docker compose logs beanquery` shows the app's errors, and `docker compose logs caddy` (in `/opt/ysto`) shows certificate problems.
 
 ### 6. The admin and the roasters
+Run every `docker compose` command for BeanQuery in `/opt/beanquery`; in `/opt/ysto` it answers `service "beanquery" is not running`.
 ```bash
 cd /opt/beanquery
 docker compose exec beanquery node dist/account/cli.js create-admin --db /data/beanquery.db
