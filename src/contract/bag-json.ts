@@ -202,6 +202,13 @@ export function parseBagFields(
   return check(bagFields, input);
 }
 
+export type CoffeeFacts = ContractBag['coffee'];
+
+/** Checks a coffee's facts, as the coffee edit form sends them. */
+export function parseCoffee(input: unknown): { ok: true; value: CoffeeFacts } | { ok: false; errors: ContractError[] } {
+  return check(coffee, input);
+}
+
 function check<T>(
   schema: z.ZodType<T>,
   input: unknown,

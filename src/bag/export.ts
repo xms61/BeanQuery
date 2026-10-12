@@ -14,27 +14,7 @@ const flag = (value: unknown) => (value === null ? null : value === 1);
  * `source` and the raw import payload.
  */
 export function exportBags(db: DatabaseSync, accountId: number): BagsDocument {
-  const listOf = (table: string, column: string) => {
-    const query = db.prepare(`SELECT ${column} AS value FROM ${table} WHERE coffee_id = ? ORDER BY position`);
-    return (coffeeId: number) => query.all(coffeeId).map((row) => String(row.value));
-  };
-  const varieties = listOf('coffee_variety', 'name');
-  const tastingNotes = listOf('coffee_tasting_note', 'note');
-
-  const bags = db
-    .prepare(
-      `SELECT b.*, c.owner_account_id, c.name AS coffee_name, c.country, c.region, c.farm, c.producer,
-         c.process_printed, c.process_category, c.altitude_printed, c.altitude_min_m, c.altitude_max_m, c.decaf,
-         r.name AS roaster_name, r.slug AS roaster_slug, g.name AS grinder_name
-       FROM bag b
-       JOIN coffee c ON c.id = b.coffee_id
-       JOIN roaster r ON r.id = c.roaster_id
-       LEFT JOIN grinder g ON g.account_id = b.account_id AND g.id = b.grinder_id
-       WHERE b.account_id = ?
-       ORDER BY b.id`,
-    )
-    .all(accountId)
-    .map((row) => toContractBag(row, varieties(Number(row.coffee_id)), tastingNotes(Number(row.coffee_id))));
+  const bags = contractBags(db, accountId, null);
 
   const roasterNotes = db
     .prepare(
@@ -50,6 +30,36 @@ export function exportBags(db: DatabaseSync, accountId: number): BagsDocument {
     .map((row) => ({ name: String(row.name), note: text(row.note) }));
 
   return { schema: 'beanquery.bags/v1', bags, roaster_notes: roasterNotes, grinders };
+}
+
+/** One own bag in the contract's shape, `personal` block filled, or undefined when the account has no such bag. */
+export function readBag(db: DatabaseSync, accountId: number, bagId: number): ContractBag | undefined {
+  return contractBags(db, accountId, bagId)[0];
+}
+
+/** The account's bags, or only the one with `bagId`, in id order. */
+function contractBags(db: DatabaseSync, accountId: number, bagId: number | null): ContractBag[] {
+  const listOf = (table: string, column: string) => {
+    const query = db.prepare(`SELECT ${column} AS value FROM ${table} WHERE coffee_id = ? ORDER BY position`);
+    return (coffeeId: number) => query.all(coffeeId).map((row) => String(row.value));
+  };
+  const varieties = listOf('coffee_variety', 'name');
+  const tastingNotes = listOf('coffee_tasting_note', 'note');
+
+  return db
+    .prepare(
+      `SELECT b.*, c.owner_account_id, c.name AS coffee_name, c.country, c.region, c.farm, c.producer,
+         c.process_printed, c.process_category, c.altitude_printed, c.altitude_min_m, c.altitude_max_m, c.decaf,
+         r.name AS roaster_name, r.slug AS roaster_slug, g.name AS grinder_name
+       FROM bag b
+       JOIN coffee c ON c.id = b.coffee_id
+       JOIN roaster r ON r.id = c.roaster_id
+       LEFT JOIN grinder g ON g.account_id = b.account_id AND g.id = b.grinder_id
+       WHERE b.account_id = ?1 AND (?2 IS NULL OR b.id = ?2)
+       ORDER BY b.id`,
+    )
+    .all(accountId, bagId)
+    .map((row) => toContractBag(row, varieties(Number(row.coffee_id)), tastingNotes(Number(row.coffee_id))));
 }
 
 function water(row: Row, prefix: string) {
