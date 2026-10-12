@@ -1,0 +1,68 @@
+name: Release
+
+# Started by hand from main (docs/DEPLOY.md). It reruns CI, publishes the image for amd64 and arm64 to GHCR with an
+# SBOM and provenance, tags the commit and creates the GitHub release. The VPS then pulls the image; CI holds no
+# credentials for it.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: The version in package.json, such as 0.2.0
+        required: true
+
+permissions:
+  contents: read
+
+concurrency: release
+
+jobs:
+  ci:
+    if: github.ref == 'refs/heads/main'
+    uses: ./.github/workflows/ci.yml
+
+  publish:
+    needs: ci
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      packages: write
+    env:
+      VERSION: ${{ inputs.version }}
+      # Lowercase, as image names must be; the repository's name has capitals.
+      IMAGE: ghcr.io/xms61/beanquery
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: The version matches package.json and isn't released yet
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$(node -p 'require("./package.json").version')" = "$VERSION"
+          if gh release view "v$VERSION" > /dev/null 2>&1; then echo "v$VERSION is already released"; exit 1; fi
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          sbom: true
+          provenance: mode=max
+          tags: |
+            ${{ env.IMAGE }}:${{ env.VERSION }}
+            ${{ env.IMAGE }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ env.VERSION }}
+            org.opencontainers.image.revision=${{ github.sha }}
+      - name: Tag and GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "v$VERSION" --target "$GITHUB_SHA" --title "v$VERSION" --generate-notes

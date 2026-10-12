@@ -22,7 +22,7 @@ BeanQuery is a TypeScript app on Node 26 that keeps its data in one SQLite file 
 | `src/layers.test.ts` | The layer rule below, as a test |
 | `src/roaster/` | The roaster registry: fetching and parsing every.coffee/roasters, importing it by slug, the admin's own roasters, each account's private roaster notes, and the `pnpm roasters:import` command |
 | `src/ops/` | The server's jobs and the restore: an online backup of the database with rotation, a checked restore, the collective-rating rebuild as `pnpm ops`, and the query behind `/healthz` |
-| `Dockerfile`, `deploy/` | The deploy image and the VPS's compose file, Caddy site and settings ([hosting and deploy](docs/design-docs/hosting-and-deploy.md)) |
+| `Dockerfile`, `deploy/` | The deploy image and the VPS's compose file, Caddy site, settings and the jobs' systemd timers ([DEPLOY.md](docs/DEPLOY.md), [hosting and deploy](docs/design-docs/hosting-and-deploy.md)) |
 | `scripts/` | Repo tooling: the doc and tracked-file checks, the agent guard hook, setup |
 | `docs/` | The system of record ([KNOWLEDGE_BASE.md](docs/KNOWLEDGE_BASE.md)) |
 

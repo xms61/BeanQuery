@@ -14,6 +14,7 @@ This file is the map, not the manual: it says which doc to read for which task. 
 | [docs/exec-plans/tech-debt-tracker.md](docs/exec-plans/tech-debt-tracker.md) | Taking a shortcut, or looking for known gaps |
 | [docs/CODE_STYLE.md](docs/CODE_STYLE.md) | Writing code, commits or pull requests |
 | [docs/TESTING.md](docs/TESTING.md) | Running or writing tests |
+| [docs/DEPLOY.md](docs/DEPLOY.md) | Deploying, releasing, or running the server: backups, restore, jobs |
 | [docs/SECURITY.md](docs/SECURITY.md) | Handling input, secrets or dependencies, or running agents in CI |
 | [docs/AGENT_TOOLS.md](docs/AGENT_TOOLS.md) | Changing agent config: skills, hooks, permissions, agent workflows |
 | [docs/KNOWLEDGE_BASE.md](docs/KNOWLEDGE_BASE.md) | Adding, moving or checking a doc, or gardening the docs |
