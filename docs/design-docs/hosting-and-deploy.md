@@ -6,7 +6,7 @@ last-verified: 2026-10-12
 # Hosting and deploy
 
 ## Context
-BeanQuery runs for invited users on the owner's Hetzner VPS, which already runs the owner's ysto game behind Caddy. The repo is public, so its CI must hold no credentials for the server. The data is one SQLite file ([storage choice](storage-choice.md)). The plan and its decisions are in the [deploy plan](../exec-plans/active/2026-10-12-deploy.md).
+BeanQuery runs for invited users on the owner's Hetzner VPS, which already runs the owner's ysto game behind Caddy. The repo is public, so its CI must hold no credentials for the server. The data is one SQLite file ([storage choice](storage-choice.md)). The runbook is [DEPLOY.md](../DEPLOY.md). The plan and its decisions are in the [deploy plan](../exec-plans/active/2026-10-12-deploy.md).
 
 ## Decision
 **The image.** The [Dockerfile](../../Dockerfile) follows ysto's:
@@ -20,7 +20,7 @@ BeanQuery runs for invited users on the owner's Hetzner VPS, which already runs 
 - **Shared Caddy:** ysto's Caddy already holds ports 80 and 443, so it serves both apps. It joins the external Docker network `edge`, which the app joins too, and imports site files from a folder. BeanQuery's site file is [deploy/beanquery.caddy](../../deploy/beanquery.caddy). Caddy gets the certificate, redirects HTTP to HTTPS and proxies to `beanquery:3000`; the app sets its own security headers, HSTS included.
 - **No addresses in logs:** the site has no access log, and the app logs no requests, only unexpected errors. Client addresses reach the app in `X-Forwarded-For` for the rate limits, which keep them in memory only.
 
-**Release and deploy.** As in ysto, the owner starts a release workflow from main (to come with the runbook), which publishes `ghcr.io/xms61/beanquery`. Over SSH, the owner then runs `docker compose pull && docker compose up -d` on the VPS. CI's `docker` job builds the image on every pull request, starts it hardened, runs the server commands in it, checks that it holds no database or `.env`, and runs Trivy, pinned by version and checksum. Dependabot keeps the base image's digest current.
+**Release and deploy.** As in ysto, the owner starts a release workflow from main, which publishes `ghcr.io/xms61/beanquery`. Over SSH, the owner then runs `docker compose pull && docker compose up -d` on the VPS. CI's `docker` job builds the image on every pull request, starts it hardened, runs the server commands in it, checks that it holds no database or `.env`, and runs Trivy, pinned by version and checksum. Dependabot keeps the base image's digest current.
 
 **Jobs.** systemd timers on the host run the nightly backup (14 kept, on the VPS), the nightly collective-rating rebuild and the weekly roaster fetch, each as a command in the running container (`pnpm ops`, [src/ops/](../../src/ops/)).
 

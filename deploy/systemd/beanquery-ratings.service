@@ -1,0 +1,11 @@
+# Rebuild the collective ratings (docs/DEPLOY.md). Started by beanquery-ratings.timer; its output goes to the journal: journalctl -u beanquery-ratings.
+[Unit]
+Description=BeanQuery: rebuild the collective ratings
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=deploy
+WorkingDirectory=/opt/beanquery
+ExecStart=/usr/bin/docker compose exec -T beanquery node dist/ops/cli.js rebuild-ratings --db /data/beanquery.db

@@ -1,0 +1,11 @@
+# Fetch the roaster registry from every.coffee (docs/DEPLOY.md). Started by beanquery-roasters.timer; its output goes to the journal: journalctl -u beanquery-roasters.
+[Unit]
+Description=BeanQuery: fetch the roaster registry from every.coffee
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=deploy
+WorkingDirectory=/opt/beanquery
+ExecStart=/usr/bin/docker compose exec -T beanquery node dist/roaster/cli.js --db /data/beanquery.db

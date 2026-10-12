@@ -1,0 +1,11 @@
+# Runs beanquery-ratings.service nightly (docs/DEPLOY.md). Persistent catches up a run missed while the server was off.
+[Unit]
+Description=BeanQuery: rebuild the collective ratings, nightly
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 UTC
+Persistent=true
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

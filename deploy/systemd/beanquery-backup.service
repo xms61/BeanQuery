@@ -1,0 +1,11 @@
+# Back up the database, keeping 14 (docs/DEPLOY.md). Started by beanquery-backup.timer; its output goes to the journal: journalctl -u beanquery-backup.
+[Unit]
+Description=BeanQuery: back up the database, keeping 14
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=deploy
+WorkingDirectory=/opt/beanquery
+ExecStart=/usr/bin/docker compose exec -T beanquery node dist/ops/cli.js backup --db /data/beanquery.db --dir /backups --keep 14
