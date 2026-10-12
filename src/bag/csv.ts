@@ -69,8 +69,9 @@ const columns: [header: string, read: (bag: ContractBag) => Cell][] = [
 /**
  * One account's bags as CSV, one row per bag, for a spreadsheet: RFC 4180 quoting, CRLF line ends, and a byte-order
  * mark so spreadsheet apps read it as UTF-8. It is for reading, not for importing back; the JSON export is the backup.
- * Text that a spreadsheet would run as a formula (starting with =, +, -, @, a tab or a carriage return) gets a
- * leading apostrophe, as OWASP advises against CSV injection. Numbers are written as they are.
+ * Text that a spreadsheet would run as a formula (starting with =, +, -, @, a tab or a carriage return, or with
+ * =, +, - or @ after spaces, which an import that trims them would run too) gets a leading apostrophe, as OWASP
+ * advises against CSV injection. Numbers are written as they are.
  */
 export function exportCsv(db: DatabaseSync, accountId: number): string {
   const rows = [
@@ -83,7 +84,7 @@ export function exportCsv(db: DatabaseSync, accountId: number): string {
 function cell(value: Cell): string {
   if (value === null || value === undefined) return '';
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+  return /^[\t\r]|^\s*[=+\-@]/.test(value) ? `'${value}` : value;
 }
 
 function quote(value: string): string {

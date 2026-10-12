@@ -88,6 +88,7 @@ describe('exportCsv', () => {
         price: { cents: 1390, currency: 'EUR' },
       };
       document.bags[0].lot = '-2+3';
+      document.bags[0].harvest = '  =1+1';
     });
     const csv = exportCsv(db, 1);
     expect(csv).toContain('"Bright, ""juicy""\nthen flat"');
@@ -97,6 +98,7 @@ describe('exportCsv', () => {
       note: 'Bright, "juicy"\nthen flat',
       shop: `'=HYPERLINK("https://evil.example","click")`,
       lot: "'-2+3",
+      harvest: "'  =1+1",
       price: '13.90',
       currency: 'EUR',
     });
