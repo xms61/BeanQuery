@@ -91,7 +91,7 @@ export function saveDocument(
   }
 }
 
-function resolveRoaster(
+export function resolveRoaster(
   db: DatabaseSync,
   ref: RoasterRef,
   choice: number | undefined,
@@ -207,7 +207,11 @@ export class Saver {
       .run(this.accountId, roasterId, note);
   }
 
-  bag(bag: ContractBag, index: number, roasterId: number): number {
+  /**
+   * The coffee a bag goes on, matched as for a new bean: the account's own private coffee for a private bean, else
+   * the pool coffee with the same roaster and name, filling its gaps, or a new one. A published bag's harvest joins it.
+   */
+  coffee(bag: ContractBag, index: number, roasterId: number): number {
     const isPrivate = bag.personal?.private ?? false;
     const coffeeId = isPrivate ? this.privateCoffee(bag, roasterId) : this.poolCoffee(bag, index, roasterId);
     if (!isPrivate && bag.harvest !== null) {
@@ -215,6 +219,11 @@ export class Saver {
         .prepare('INSERT OR IGNORE INTO coffee_harvest (coffee_id, harvest) VALUES (?, ?)')
         .run(coffeeId, bag.harvest);
     }
+    return coffeeId;
+  }
+
+  bag(bag: ContractBag, index: number, roasterId: number): number {
+    const coffeeId = this.coffee(bag, index, roasterId);
     const values: Record<string, SQLInputValue> = {
       account_id: this.accountId,
       coffee_id: coffeeId,
