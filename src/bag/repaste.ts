@@ -3,6 +3,7 @@ import { applyCoffeeEdit } from '../coffee/edit.js';
 import { type ContractError, parseBagsJson, pasteLimits } from '../contract/bag-json.js';
 import { readBag } from './export.js';
 import { bagColumns, type Difference, type RoasterQuestion, resolveRoaster, Saver } from './import.js';
+import { ratedOn } from './manage.js';
 
 export type RepasteResult =
   | { status: 'saved'; differences: Difference[] }
@@ -68,7 +69,10 @@ export function repasteBag(
       coffeeId = save.coffee(merged, 0, answer.roaster.id);
     }
 
-    const values = bagColumns(merged, merged.brew.grinder === null ? null : save.grinder(merged.brew.grinder));
+    const values = {
+      ...bagColumns(merged, merged.brew.grinder === null ? null : save.grinder(merged.brew.grinder)),
+      rated_on: ratedOn(db, bagId, merged.personal.rating ?? null),
+    };
     const columns = Object.keys(values);
     db.prepare(
       `UPDATE bag SET coffee_id = ?, import_payload = ?, ${columns.map((column) => `${column} = ?`).join(', ')}

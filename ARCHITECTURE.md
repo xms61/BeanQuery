@@ -14,7 +14,7 @@ BeanQuery is a TypeScript app on Node 26 that keeps its data in one SQLite file 
 | `src/db.ts` | Opens the SQLite database with foreign keys on |
 | `src/db/migrate.ts` | The schema, as numbered migrations applied once each by `migrate` |
 | `src/bag/` | One account's bags: import of a pasted or uploaded document, manual entry, edits, re-paste, state, delete, export, and the reminders |
-| `src/coffee/` | Coffees: the name key that pool matching uses, and editing facts, "Use mine" and moving a bag |
+| `src/coffee/` | Coffees: the name key and close matches, editing facts, "Use mine" and moving a bag, pool search, and the collective rating |
 | `src/contract/` | The bag JSON contract as one Zod definition: validation by field path, and the generated JSON Schema in `docs/generated/` |
 | `src/roaster/` | The roaster registry: fetching and parsing every.coffee/roasters, importing it by slug, the admin's own roasters, and the `pnpm roasters:import` command |
 | `scripts/` | Repo tooling: the doc and tracked-file checks, the agent guard hook, setup |
