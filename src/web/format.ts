@@ -10,6 +10,8 @@ const format = (date: string, options: Intl.DateTimeFormatOptions) =>
 
 /** "25 Sep" */
 export const shortDate = (date: string) => format(date, { day: 'numeric', month: 'short' });
+/** "12 Oct 2026" */
+export const fullDate = (date: string) => format(date, { day: 'numeric', month: 'short', year: 'numeric' });
 /** "Fri 9 Oct" */
 export const weekdayDate = (date: string) => format(date, { weekday: 'short', day: 'numeric', month: 'short' });
 /** "Wednesday 7 October" */

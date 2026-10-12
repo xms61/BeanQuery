@@ -13,6 +13,7 @@ import { AppPage, CardPage } from './layout.js';
 import { RateLimiter } from './rate-limit.js';
 import { accountRoutes } from './routes/account.js';
 import { addRoutes } from './routes/add.js';
+import { adminRoutes } from './routes/admin.js';
 import { bagActionRoutes } from './routes/bag-actions.js';
 import { editRoutes } from './routes/edit.js';
 import { libraryRoutes } from './routes/library.js';
@@ -58,8 +59,9 @@ export function createApp(config: WebConfig): Hono<Env> {
         413,
       ),
   });
-  // An export upload (/import) sets its own, larger limit.
-  app.use((c, next) => (c.req.path === '/import' ? next() : formLimit(c, next)));
+  // An export upload (/import) and a saved roaster page (/admin/roasters/upload) set their own, larger limits.
+  const ownLimit = new Set(['/import', '/admin/roasters/upload']);
+  app.use((c, next) => (ownLimit.has(c.req.path) ? next() : formLimit(c, next)));
   app.use(async (c, next) => {
     // The assets are public and cacheable: no session is read or renewed, so no cache can keep a session cookie.
     if (c.req.path.startsWith('/assets/')) return next();
@@ -98,6 +100,7 @@ export function createApp(config: WebConfig): Hono<Env> {
   app.route('/', addRoutes);
   app.route('/', editRoutes);
   app.route('/', poolRoutes);
+  app.route('/', adminRoutes);
   app.route('/', pageRoutes);
 
   // Logged without the request, so no address, cookie or pasted text reaches the log; the page says nothing internal.

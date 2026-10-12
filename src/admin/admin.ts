@@ -3,7 +3,9 @@ import { createInvite, deleteAccount, openInviteCount } from '../account/account
 import { type CoffeeWriteResult, readCoffee, setFact, writeCoffeeFacts } from '../coffee/edit.js';
 import { applyMakePrivate } from '../coffee/privacy.js';
 import { type CoffeeFacts, parseCoffee } from '../contract/bag-json.js';
+import { type ImportSummary, importRoasters } from '../roaster/import.js';
 import { roasterNameKey } from '../roaster/name-key.js';
+import { parseRoasterList } from '../roaster/parse.js';
 import { addRoaster, type Roaster } from '../roaster/registry.js';
 
 /**
@@ -88,9 +90,119 @@ export function adminAddRoaster(
   db: DatabaseSync,
   adminId: number,
   name: string,
-): { status: 'saved'; roaster: Roaster } | NotAdmin {
+): { status: 'saved'; roaster: Roaster } | { status: 'invalid' } | NotAdmin {
   if (!isAdmin(db, adminId)) return notAdmin;
+  if (roasterNameKey(name) === '' || name.length > 500) return { status: 'invalid' };
   return { status: 'saved', roaster: addRoaster(db, name) };
+}
+
+/**
+ * Imports a saved copy of every.coffee/roasters, as `pnpm roasters:import --file` does: for when the weekly fetch is
+ * refused. A page with no roaster links is refused with the parser's message and changes nothing.
+ */
+export function adminImportRoasters(
+  db: DatabaseSync,
+  adminId: number,
+  html: string,
+): { status: 'saved'; summary: ImportSummary } | { status: 'invalid'; message: string } | NotAdmin {
+  if (!isAdmin(db, adminId)) return notAdmin;
+  let listings: ReturnType<typeof parseRoasterList>;
+  try {
+    listings = parseRoasterList(html);
+  } catch (error) {
+    return { status: 'invalid', message: (error as Error).message };
+  }
+  return { status: 'saved', summary: importRoasters(db, listings) };
+}
+
+export interface PoolCoffeeRow {
+  coffeeId: number;
+  name: string;
+  roaster: string;
+  /** Bags of every account on it. */
+  bags: number;
+  edits: number;
+  lastEdit: string | null;
+}
+
+/**
+ * The pool coffees for the admin, by roaster and name, with every account's bag count and the edit log's size. A
+ * query matches when each word appears in the coffee's or the roaster's name. At most `limit` rows, with the total.
+ */
+export function adminPoolCoffees(
+  db: DatabaseSync,
+  adminId: number,
+  query = '',
+  limit = 200,
+): { coffees: PoolCoffeeRow[]; total: number } | NotAdmin {
+  if (!isAdmin(db, adminId)) return notAdmin;
+  const words = roasterNameKey(query).split(' ').filter(Boolean);
+  const rows = db
+    .prepare(
+      `SELECT c.id, c.name, c.name_key, r.name AS roaster, r.name_key AS roaster_key,
+         (SELECT count(*) FROM bag b WHERE b.coffee_id = c.id) AS bags,
+         (SELECT count(*) FROM coffee_edit e WHERE e.coffee_id = c.id) AS edits,
+         (SELECT max(edited_on) FROM coffee_edit e WHERE e.coffee_id = c.id) AS last_edit
+       FROM coffee c JOIN roaster r ON r.id = c.roaster_id
+       WHERE c.owner_account_id IS NULL ORDER BY r.name_key, c.name_key, c.id`,
+    )
+    .all()
+    .filter((row) => {
+      const haystack = `${roasterNameKey(String(row.name_key))} ${row.roaster_key}`.split(' ');
+      return words.every((word) => haystack.includes(word));
+    });
+  return {
+    coffees: rows.slice(0, limit).map((row) => ({
+      coffeeId: Number(row.id),
+      name: String(row.name),
+      roaster: String(row.roaster),
+      bags: Number(row.bags),
+      edits: Number(row.edits),
+      lastEdit: row.last_edit === null ? null : String(row.last_edit),
+    })),
+    total: rows.length,
+  };
+}
+
+/** One pool coffee for the admin: its facts, roaster, bag count, and the roaster's other pool coffees to merge into. */
+export function adminCoffee(
+  db: DatabaseSync,
+  adminId: number,
+  coffeeId: number,
+):
+  | {
+      status: 'found';
+      coffeeId: number;
+      roaster: string;
+      facts: CoffeeFacts;
+      bags: number;
+      others: { coffeeId: number; name: string }[];
+    }
+  | { status: 'not_found' }
+  | NotAdmin {
+  if (!isAdmin(db, adminId)) return notAdmin;
+  const row = db
+    .prepare(
+      `SELECT c.roaster_id, r.name AS roaster, (SELECT count(*) FROM bag b WHERE b.coffee_id = c.id) AS bags
+       FROM coffee c JOIN roaster r ON r.id = c.roaster_id WHERE c.id = ? AND c.owner_account_id IS NULL`,
+    )
+    .get(coffeeId);
+  const facts = row === undefined ? undefined : readCoffee(db, coffeeId);
+  if (row === undefined || facts === undefined) return { status: 'not_found' };
+  return {
+    status: 'found',
+    coffeeId,
+    roaster: String(row.roaster),
+    facts,
+    bags: Number(row.bags),
+    others: db
+      .prepare(
+        `SELECT id, name FROM coffee WHERE roaster_id = ? AND owner_account_id IS NULL AND id != ?
+         ORDER BY name_key, id`,
+      )
+      .all(Number(row.roaster_id), coffeeId)
+      .map((other) => ({ coffeeId: Number(other.id), name: String(other.name) })),
+  };
 }
 
 /** Adds another spelling that resolves to a roaster on the next paste. Adding one that exists changes nothing. */

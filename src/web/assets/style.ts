@@ -229,6 +229,8 @@ input[type='date'], label.field textarea {
 .bag-tools { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .bag-tools .actions { margin: 0; }
 .verdict .form-grid { grid-template-columns: 1fr 1fr; }
+form.inline-confirm { display: flex; gap: 8px; align-items: center; }
+form.inline-confirm .check { margin: 0; }
 .split { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: start; }
 @media (max-width: 900px) { .split { grid-template-columns: minmax(0, 1fr); } }
 .figure { font-size: 32px; line-height: 40px; letter-spacing: -1px; margin-right: 8px; }

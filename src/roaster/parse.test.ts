@@ -69,6 +69,15 @@ describe('parseRoasterList', () => {
     expect(performance.now() - started).toBeLessThan(500);
   });
 
+  test('stays fast on a hostile upload full of opening tags that never close', () => {
+    for (const unit of ['<a ', '<a href="/roaster/x" ']) {
+      const html = unit.repeat(Math.ceil((1024 * 1024) / unit.length));
+      const started = performance.now();
+      expect(() => parseRoasterList(html)).toThrow(/no roaster links/i);
+      expect([unit, performance.now() - started < 500]).toEqual([unit, true]);
+    }
+  });
+
   test('refuses a page with no roaster links, so a changed or challenge page never looks like an empty list', () => {
     expect(() => parseRoasterList('<html><body>Just a moment...</body></html>')).toThrow(/no roaster links/i);
   });

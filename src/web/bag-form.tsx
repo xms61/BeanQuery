@@ -151,20 +151,7 @@ export function bagToForm(bag: ContractBag): FormValues {
     values[name] = value === true ? 'yes' : String(value);
   };
   put('roaster.name', bag.roaster.name);
-  const { coffee } = bag;
-  put('coffee.name', coffee.name);
-  put('coffee.country', coffee.country);
-  put('coffee.region', coffee.region);
-  put('coffee.producer', coffee.producer);
-  put('coffee.farm', coffee.farm);
-  put('coffee.varieties', coffee.varieties.join(', '));
-  put('coffee.process.category', coffee.process.category);
-  put('coffee.process.printed', coffee.process.printed);
-  put('coffee.altitude.printed', coffee.altitude.printed);
-  put('coffee.altitude.min_m', coffee.altitude.min_m);
-  put('coffee.altitude.max_m', coffee.altitude.max_m);
-  put('coffee.tasting_notes', coffee.tasting_notes.join(', '));
-  put('coffee.decaf', coffee.decaf);
+  Object.assign(values, coffeeToForm(bag.coffee));
   put('roast_date.date', bag.roast_date.date);
   put('roast_date.printed', bag.roast_date.printed);
   put('roast_date.status', bag.roast_date.status);
@@ -204,6 +191,29 @@ export function bagToForm(bag: ContractBag): FormValues {
   put('personal.rebuy', personal.rebuy === null || personal.rebuy === undefined ? null : personal.rebuy ? 'yes' : 'no');
   put('personal.note', personal.note);
   put('personal.private', personal.private);
+  return values;
+}
+
+/** A coffee's facts as form values, for the admin's facts form and inside a bag's. */
+export function coffeeToForm(coffee: ContractBag['coffee']): FormValues {
+  const values: FormValues = {};
+  const put = (name: string, value: string | number | boolean | null) => {
+    if (value === null || value === false || value === '') return;
+    values[name] = value === true ? 'yes' : String(value);
+  };
+  put('coffee.name', coffee.name);
+  put('coffee.country', coffee.country);
+  put('coffee.region', coffee.region);
+  put('coffee.producer', coffee.producer);
+  put('coffee.farm', coffee.farm);
+  put('coffee.varieties', coffee.varieties.join(', '));
+  put('coffee.process.category', coffee.process.category);
+  put('coffee.process.printed', coffee.process.printed);
+  put('coffee.altitude.printed', coffee.altitude.printed);
+  put('coffee.altitude.min_m', coffee.altitude.min_m);
+  put('coffee.altitude.max_m', coffee.altitude.max_m);
+  put('coffee.tasting_notes', coffee.tasting_notes.join(', '));
+  put('coffee.decaf', coffee.decaf);
   return values;
 }
 
@@ -439,6 +449,11 @@ export function BagFormFields(props: { values: FormValues; withRoaster: boolean;
       <Group title="Your verdict" fields={verdictFields} values={values} />
     </>
   );
+}
+
+/** A coffee's facts alone, for the admin's edit form. */
+export function CoffeeFormFields(props: { values: FormValues }) {
+  return <Group title="Bean facts" note="shared in the pool" fields={coffeeFields} values={props.values} />;
 }
 
 /** The verdict fields alone, for the bag page's rating form. */
