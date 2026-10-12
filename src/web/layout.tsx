@@ -1,7 +1,8 @@
 import type { Child } from 'hono/jsx';
+import { assetVersion } from './assets/style.js';
 
 /** The current section of the app, which the sidebar marks. */
-export type Section = 'library' | 'account' | 'admin' | 'impressum';
+export type Section = 'library' | 'add' | 'account' | 'admin' | 'impressum';
 
 function Document(props: { title: string; children: Child }) {
   return (
@@ -10,8 +11,8 @@ function Document(props: { title: string; children: Child }) {
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{`${props.title} · BeanQuery`}</title>
-        <link rel="stylesheet" href="/assets/app.css" />
-        <script src="/assets/app.js" defer></script>
+        <link rel="stylesheet" href={`/assets/app.css?v=${assetVersion}`} />
+        <script src={`/assets/app.js?v=${assetVersion}`} defer></script>
       </head>
       <body>{props.children}</body>
     </html>
@@ -30,6 +31,9 @@ export function AppPage(props: { title: string; section: Section; admin: boolean
           </a>
           <a class="nav" href="/" aria-current={current('library')}>
             Library
+          </a>
+          <a class="nav" href="/add" aria-current={current('add')}>
+            Add bag
           </a>
           {props.admin && (
             <a class="nav" href="/admin" aria-current={current('admin')}>

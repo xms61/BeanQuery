@@ -497,6 +497,15 @@ function BagPage(props: { detail: NonNullable<ReturnType<typeof bagDetail>>; tod
           </section>
           <section class="card quiet">
             <p class="muted small">{props.detail.inPool ? 'In the pool' : 'Private'}</p>
+            <form
+              method="post"
+              action={`/bags/${props.detail.bagId}/${props.detail.inPool ? 'private' : 'publish'}`}
+              class="actions"
+            >
+              <button class="button quiet" type="submit">
+                {props.detail.inPool ? 'Make this bean private' : 'Publish to the pool'}
+              </button>
+            </form>
             {props.detail.collective !== null ? (
               <p>
                 <strong>{props.detail.collective.rating}</strong>{' '}
@@ -511,6 +520,18 @@ function BagPage(props: { detail: NonNullable<ReturnType<typeof bagDetail>>; tod
                 ? 'Other accounts see the bean facts and the collective rating, never your plan, water, grind or notes.'
                 : 'No other account sees this bean.'}
             </p>
+          </section>
+          <section class="card">
+            <h2>Delete bag</h2>
+            <form method="post" action={`/bags/${props.detail.bagId}/delete`}>
+              <label class="check">
+                <input type="checkbox" name="confirm" value="yes" required /> Delete this bag
+              </label>
+              <button class="button quiet" type="submit">
+                Delete
+              </button>
+            </form>
+            <p class="muted small">Its coffee stays, in the pool or as your private coffee.</p>
           </section>
         </div>
       </div>

@@ -92,7 +92,9 @@ export function applyPublish(
       return { status: 'needs_coffee', bags: [{ index: 0, entered: facts.name, candidates }] };
     } else {
       const chosen = candidates.find((c) => c.id === choice);
-      if (chosen === undefined) throw new Error(`Coffee ${choice} is not one of the coffees offered for ${facts.name}`);
+      // A stale or forged choice gets the question again.
+      if (chosen === undefined)
+        return { status: 'needs_coffee', bags: [{ index: 0, entered: facts.name, candidates }] };
       target = chosen.id;
     }
   }

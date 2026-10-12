@@ -67,7 +67,8 @@ describe('the layer rule, db → domain → web', () => {
     const broken = sources
       // Tests and their shared setup may seed data directly.
       .filter((path) => layerOf(path) === 'web' && !/(\.test\.tsx?|test-support\.ts)$/.test(path))
-      .filter((path) => /\.(prepare|exec)\(/.test(readFileSync(path, 'utf8')))
+      // A statement (`.prepare(`) or a script run on a database (`db.exec(`); a regular expression's `.exec(` is fine.
+      .filter((path) => /\.prepare\(|\bdb\.exec\(/.test(readFileSync(path, 'utf8')))
       .map(name);
     expect(broken, 'Put the query in a domain module and call that from the route').toEqual([]);
   });

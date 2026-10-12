@@ -29,11 +29,17 @@ export function setup(options: { secureCookies?: boolean; defaultTimeZone?: stri
   });
   const request = (
     path: string,
-    init: { form?: Record<string, string>; cookie?: string; headers?: Record<string, string> } = {},
-  ) =>
-    app.request(path, {
-      method: init.form === undefined ? 'GET' : 'POST',
-      ...(init.form === undefined ? {} : { body: new URLSearchParams(init.form) }),
+    init: {
+      form?: Record<string, string>;
+      multipart?: FormData;
+      cookie?: string;
+      headers?: Record<string, string>;
+    } = {},
+  ) => {
+    const body = init.multipart ?? (init.form === undefined ? undefined : new URLSearchParams(init.form));
+    return app.request(path, {
+      method: body === undefined ? 'GET' : 'POST',
+      ...(body === undefined ? {} : { body }),
       headers: {
         Origin: 'http://localhost',
         ...(init.form === undefined ? {} : { 'Content-Type': 'application/x-www-form-urlencoded' }),
@@ -41,6 +47,7 @@ export function setup(options: { secureCookies?: boolean; defaultTimeZone?: stri
         ...init.headers,
       },
     });
+  };
   return { app, db, clock, request };
 }
 

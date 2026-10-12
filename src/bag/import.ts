@@ -20,6 +20,18 @@ export interface ImportOptions {
   roasterChoices?: Record<number, number>;
   /** The coffee the user picked for a bag, by index, after a `needs_coffee` answer: a coffee's id, or `new`. */
   coffeeChoices?: Record<number, CoffeeChoice>;
+  /** Work out what saving would do, then roll it back: the review step before the user saves. */
+  preview?: boolean;
+}
+
+/** What saving one bag would do, for the review step. */
+export interface BagPreview {
+  /** The registered roaster the bag resolves to. */
+  roaster: string;
+  /** `name`: the entered name is the roaster's; `alias`: a known other spelling; `picked`: the user chose it. */
+  roasterMatch: 'name' | 'alias' | 'picked';
+  /** Whether the bean joins a coffee already there, or creates one, in the pool or among the account's own. */
+  coffee: 'joins_pool' | 'new_pool' | 'joins_private' | 'new_private';
 }
 
 export type CoffeeChoice = number | 'new';
@@ -50,6 +62,7 @@ export interface Difference {
 
 export type ImportResult =
   | { status: 'saved'; bagIds: number[]; differences: Difference[] }
+  | { status: 'preview'; bags: BagPreview[]; differences: Difference[] }
   | { status: 'needs_roaster'; bags: RoasterQuestion[] }
   | { status: 'needs_coffee'; bags: CoffeeQuestion[] }
   | { status: 'invalid'; errors: ContractError[] };
@@ -65,6 +78,7 @@ export function importBags(db: DatabaseSync, accountId: number, json: string, op
   return saveDocument(db, accountId, parsed.value, 'json', {
     roasters: options.roasterChoices,
     coffees: options.coffeeChoices,
+    preview: options.preview,
   });
 }
 
@@ -74,7 +88,11 @@ export function saveDocument(
   accountId: number,
   document: BagsDocument,
   source: 'json' | 'manual',
-  choices: { roasters?: Record<number, number> | undefined; coffees?: Record<number, CoffeeChoice> | undefined } = {},
+  choices: {
+    roasters?: Record<number, number> | undefined;
+    coffees?: Record<number, CoffeeChoice> | undefined;
+    preview?: boolean | undefined;
+  } = {},
 ): ImportResult {
   const resolved: { roaster: Roaster; confirmed: boolean }[] = [];
   const questions: RoasterQuestion[] = [];
@@ -100,6 +118,8 @@ export function saveDocument(
   if ('errors' in notes) return { status: 'invalid', errors: notes.errors };
 
   const save = new Saver(db, accountId, source);
+  // Coffees with a higher id than this were created by this save, which the preview reports as new.
+  const lastCoffee = Number(db.prepare('SELECT coalesce(max(id), 0) AS id FROM coffee').get()?.id);
   db.exec('BEGIN');
   try {
     for (const grinder of document.grinders ?? []) save.grinder(grinder.name, grinder.note);
@@ -109,6 +129,29 @@ export function saveDocument(
       return save.bag(bag, index, roaster.id, targets[index]);
     });
     for (const { roasterId, note } of notes.resolved) save.roasterNote(roasterId, note);
+    if (choices.preview) {
+      const coffeeOf = db.prepare(
+        'SELECT c.id, c.owner_account_id FROM bag b JOIN coffee c ON c.id = b.coffee_id WHERE b.id = ?',
+      );
+      const bags = bagIds.map((bagId, index): BagPreview => {
+        const { roaster } = resolved[index] as { roaster: Roaster };
+        const entered = (document.bags[index] as ContractBag).roaster.name;
+        const coffee = coffeeOf.get(bagId);
+        const kind = coffee?.owner_account_id === null ? 'pool' : 'private';
+        return {
+          roaster: roaster.name,
+          roasterMatch:
+            choices.roasters?.[index] !== undefined
+              ? 'picked'
+              : roasterNameKey(entered) === roasterNameKey(roaster.name)
+                ? 'name'
+                : 'alias',
+          coffee: `${Number(coffee?.id) > lastCoffee ? 'new' : 'joins'}_${kind}`,
+        };
+      });
+      db.exec('ROLLBACK');
+      return { status: 'preview', bags, differences: save.differences };
+    }
     db.exec('COMMIT');
     return { status: 'saved', bagIds, differences: save.differences };
   } catch (error) {
@@ -140,11 +183,8 @@ function resolveCoffee(
   const candidates = closeCoffees(db, accountId, roasterId, nameKey);
   if (choice === 'new') return 'new';
   if (choice === undefined) return candidates.length > 0 ? candidates : undefined;
-  const chosen = candidates.find((candidate) => candidate.id === choice);
-  if (chosen === undefined) {
-    throw new Error(`The coffee chosen for ${bag.coffee.name}, coffee ${choice}, is not one of the coffees offered`);
-  }
-  return chosen;
+  // A stale or forged choice gets the question again.
+  return candidates.find((candidate) => candidate.id === choice) ?? candidates;
 }
 
 export function resolveRoaster(
@@ -156,11 +196,9 @@ export function resolveRoaster(
   if ('roaster' in question || choice === undefined) return question;
 
   // Aliases are shared by every account, so a choice must be one the question offered: anything else could point a
-  // spelling at the wrong roaster for everyone.
+  // spelling at the wrong roaster for everyone. A stale or forged choice gets the question again.
   const chosen = question.candidates.find((candidate) => candidate.id === choice);
-  if (chosen === undefined) {
-    throw new Error(`The roaster chosen for ${ref.name}, roaster ${choice}, is not one of the roasters offered`);
-  }
+  if (chosen === undefined) return question;
   // Only a new spelling is worth an alias. A pick between roasters that share the name adds none.
   return { roaster: chosen, confirmed: question.reason === 'unknown' };
 }

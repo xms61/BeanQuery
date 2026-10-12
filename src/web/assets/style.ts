@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 /**
  * The app's stylesheet, served at /assets/app.css. The color tokens are the Figma variables ("BeanQuery color" and
  * "BeanQuery color dark"), so a screen here and its design use the same names. Fonts fall back to the system's until
@@ -195,6 +197,20 @@ table.events a { text-decoration: none; }
 .figures strong { font-size: 24px; margin-right: 12px; }
 .note-text { background: var(--bg-sunk); border-radius: 8px; padding: 12px; }
 
+.add-grid { display: grid; grid-template-columns: 440px 1fr; gap: 24px; align-items: start; }
+textarea.code {
+  font: 13px/20px var(--font-code); color: var(--ink-default); background: var(--bg-sunk);
+  border: 0; border-radius: 8px; padding: 16px; width: 100%; resize: vertical;
+}
+.ok { color: var(--phase-peak); }
+.callout { background: var(--bg-sunk); border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; }
+.problem { border: 1px solid var(--accent-cherry); border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; }
+.problem code { font-family: var(--font-code); }
+fieldset.question { border: 1px solid var(--phase-rested); border-radius: 12px; padding: 16px 20px; margin: 0 0 16px; }
+fieldset.question legend { font-weight: 600; padding: 0 6px; }
+label.choice { display: flex; gap: 10px; align-items: center; border: 1px solid var(--line-default); border-radius: 8px; padding: 10px 14px; margin: 8px 0; }
+.bag-summary h2 { margin-top: 16px; }
+
 @media print {
   .side, footer, .actions, .no-print { display: none; }
 }
@@ -219,3 +235,6 @@ for (const button of document.querySelectorAll('[data-print]')) {
   button.addEventListener('click', () => window.print());
 }
 `;
+
+/** A short hash of the assets, put in their URLs so a deploy's new styles and script are fetched despite caching. */
+export const assetVersion = createHash('sha256').update(styleSheet).update(appScript).digest('hex').slice(0, 10);

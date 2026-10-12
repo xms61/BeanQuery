@@ -245,3 +245,22 @@ describe('re-pasting personal.private', () => {
     db.close();
   });
 });
+
+describe('a stale or forged pick when publishing', () => {
+  test('gets the question again and moves nothing', () => {
+    const db = seeded();
+    const bag = structuredClone(fixture.bags[0]);
+    bag.coffee.name = 'Ethiopia Sasaba Lot 2';
+    bag.personal = { private: true };
+    addBag(db, 2, bag);
+    const bagId = Number(db.prepare('SELECT max(id) AS id FROM bag WHERE account_id = 2').get()?.id);
+
+    expect(publishBean(db, 2, bagId, { coffeeChoice: 999 })).toMatchObject({ status: 'needs_coffee' });
+    expect(
+      db.prepare('SELECT c.owner_account_id FROM bag b JOIN coffee c ON c.id = b.coffee_id WHERE b.id = ?').get(bagId),
+    ).toEqual({
+      owner_account_id: 2,
+    });
+    db.close();
+  });
+});

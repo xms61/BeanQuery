@@ -137,9 +137,9 @@ describe('close matches on import', () => {
     db.close();
   });
 
-  test('refuses a pick that was not offered', () => {
+  test('asks again for a pick that was not offered', () => {
     const db = seeded();
-    expect(() => paste(db, 2, [sasaba('Ethiopia Sasaba Lot 2')], { 0: 3 })).toThrow(/not one of the coffees offered/);
+    expect(paste(db, 2, [sasaba('Ethiopia Sasaba Lot 2')], { 0: 3 })).toMatchObject({ status: 'needs_coffee' });
     expect(count(db, 'bag WHERE account_id = 2')).toBe(0);
     db.close();
   });
