@@ -29,7 +29,7 @@ This file is the map, not the manual: it says which doc to read for which task. 
 | Skills | Edit `.claude/skills/` |
 | Tests of the repo scripts | `pnpm test:scripts` |
 | Install | `pnpm install` (pnpm 12, pinned in package.json; settings in pnpm-workspace.yaml) |
-| Run locally | Not yet: the web app's framework is still to be chosen |
+| Run locally | Copy `.env.example` to `.env` (uncomment `SECURE_COOKIES=false` if your browser drops secure cookies on plain HTTP), then `pnpm start` (open http://127.0.0.1:3000; create an invite with `pnpm admin`) |
 | Lint and format | `pnpm lint` to check (Biome), `pnpm format` to fix |
 | Typecheck | `pnpm typecheck` |
 | Import roasters from every.coffee, or from a saved copy | `pnpm roasters:import --db <file>` (add `--file <saved page>` for a saved copy) |

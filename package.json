@@ -21,7 +21,8 @@
     "contract:schema": "tsc && node dist/contract/write-schema.js",
     "admin": "tsc && node dist/account/cli.js",
     "test": "vitest run",
-    "test:scripts": "node --test \"scripts/**/*.test.mjs\""
+    "test:scripts": "node --test \"scripts/**/*.test.mjs\"",
+    "start": "tsc && node --env-file-if-exists=.env dist/web/server.js"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
@@ -30,6 +31,8 @@
     "vitest": "5.0.3"
   },
   "dependencies": {
+    "@hono/node-server": "2.1.4",
+    "hono": "4.13.13",
     "zod": "4.6.5"
   }
 }
