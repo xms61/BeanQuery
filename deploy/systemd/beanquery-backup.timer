@@ -1,0 +1,11 @@
+# Runs beanquery-backup.service nightly (docs/DEPLOY.md). Persistent catches up a run missed while the server was off.
+[Unit]
+Description=BeanQuery: back up the database, keeping 14, nightly
+
+[Timer]
+OnCalendar=*-*-* 03:00:00 UTC
+Persistent=true
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

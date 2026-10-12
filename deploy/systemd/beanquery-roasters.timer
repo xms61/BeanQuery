@@ -1,0 +1,11 @@
+# Runs beanquery-roasters.service weekly (docs/DEPLOY.md). Persistent catches up a run missed while the server was off.
+[Unit]
+Description=BeanQuery: fetch the roaster registry from every.coffee, weekly
+
+[Timer]
+OnCalendar=Mon *-*-* 04:00:00 UTC
+Persistent=true
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

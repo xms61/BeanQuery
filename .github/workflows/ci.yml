@@ -5,12 +5,15 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # The release workflow runs these checks again before it publishes.
+  workflow_call:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  # The workflow name keeps the release's run of these checks (workflow_call) apart from a push's run on main.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
