@@ -187,7 +187,7 @@ Matching a new bean, in order:
    - On a hit, the bag links to that coffee, so two users with the same bean from the same roaster share one pool coffee and both ratings count toward it.
    - The bag's harvest joins the coffee's harvest list.
    - Missing facts on the pool row are filled from the new bean. A value that differs is kept on the pool row and shown to the user, who can use theirs instead; that is an edit, logged like any other.
-4. **Close matches.** Otherwise, offer coffees with similar names ("Gathaithi AA [Washed]" against "Gathaithi AA"), from that roaster's pool coffees and the user's own private coffees only. One click links to one of them.
+4. **Close matches.** Otherwise, offer coffees with similar names ("Gathaithi AA Lot 2" against "Gathaithi AA"; "Gathaithi AA [Washed]" already matches exactly, because the name key drops it), from that roaster's pool coffees and the user's own private coffees only. One click links to one of them.
 5. **New coffee.** Otherwise, create the coffee in the pool.
 
 `name_key` lowercases the name, folds accents, and drops punctuation and the process words the roaster put in brackets. The tests pin down which spellings count as the same bean.
@@ -229,7 +229,7 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - [x] 2026-10-12 Design docs written: [account model](../../design-docs/account-model.md) and [web framework](../../design-docs/web-framework.md)
 - [x] 2026-10-12 Database schema and migrations: every table of the draft data model, in `src/db/migrate.ts`, tested in `src/db/schema.test.ts`
 - [x] 2026-10-12 Roaster registry imported from every.coffee (`src/roaster/`, `pnpm roasters:import`). The live run loaded 9,152 roasters. Still to do: the owner tries a page saved from Firefox and from Chrome (see Surprises). In later steps: the upload and add-roaster screens (step 8) and the weekly job on the server (step 10)
-- [ ] Bags, import and export in the domain layer
+- [ ] Bags, import and export in the domain layer. Done 2026-10-12: import of a pasted or uploaded document (`src/bag/import.ts`), with roaster resolution, exact pool matching, gap filling, harvests, grinders and roaster notes, and export (`src/bag/export.ts`), with the 60-bag round trip. Still to do: add, edit and delete bags by hand, set the state, edit coffee facts with the rename rule, and re-paste with "Use mine"
 - [ ] Pool, matching and collective rating
 - [ ] Accounts by invitation, and admin
 - [ ] Web layer and screens
@@ -300,6 +300,10 @@ None right now. All were answered on 2026-10-07; see the Decision log.
   - **Alternative water:** a bag can log a second, alternative water as `brew.water_alt`, shaped like `brew.water` and only beside it. It is optional, so documents without it stay valid v1 and no v2 is needed. The database gets `water_alt_*` columns in migration 3.
   - **Grind:** the recipe now varies, so the prompt gives one grind for fresh beans and one for frozen tubes, with no per-brewer settings. The contract still stores one: the fresh setting, from which the frozen one follows by one tick.
   - **English:** the prompt writes everything in English. It translates descriptive wording (process, roast wording, tasting notes, country names) and keeps proper names as printed. The spec says so in place of "kept verbatim". This stays v1: the fields still hold the bag's wording, only in English, and every earlier payload, French wording included, still validates.
+- 2026-10-12: A coffee's `name_key` drops a bracketed part only when every word in it is a process word (washed, natural, honey, anaerobic and the like). "Gathaithi AA [Washed]" matches "Gathaithi AA", but Tanat's "Panama - Elida [Catuai ASD T4D 1304]" keeps its bracket, because brackets that say more can tell two coffees apart.
+- 2026-10-12: An import that has a bag whose roaster doesn't resolve returns `needs_roaster`, with one question per bag, and saves nothing. The question lists every roaster sharing the name, or similar names: the same once filler words such as "Coffee" and "Roasters" are dropped, or one name starting with the other. The caller passes the user's picks back by bag index. A pick counts only for a bag that asked, and only from the roasters it offered; anything else is refused, because aliases are shared by every account and a stray pick could point a spelling at the wrong roaster for everyone. Only a pick for an unknown spelling stores that spelling as an alias.
+- 2026-10-12: Filling a pool coffee's gap on import writes a `coffee_edit` row, like any edit, so the admin can undo a bad fill. Values that differ go back to the caller as `differences` for the "Use mine" step; the pool row keeps its own.
+- 2026-10-12: An import naming one roaster in two roaster notes is refused, naming both entries. Rejected: keeping the last note, which would lose the first without a word.
 
 ## Surprises
 - 2026-10-07: every.coffee answered the agent's fetch tool with 403, but a plain `curl` with an honest user agent ("BeanQuery roaster sync (weekly, non-commercial)") got 200. The page was 7.6 MB, with 9,149 roaster slugs and 9,101 distinct names; 49 names have several slugs. Its product pages carry structured origin, variety and tasting notes.
