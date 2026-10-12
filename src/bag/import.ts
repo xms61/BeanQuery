@@ -1,4 +1,5 @@
 import type { DatabaseSync, SQLInputValue } from 'node:sqlite';
+import { type CloseCoffee, closeCoffees } from '../coffee/match.js';
 import { coffeeNameKey } from '../coffee/name-key.js';
 import {
   type BagFields,
@@ -17,6 +18,17 @@ export interface ImportOptions {
   limits: ContractLimits;
   /** The roaster the user picked for a bag, by the bag's index, after a `needs_roaster` answer. */
   roasterChoices?: Record<number, number>;
+  /** The coffee the user picked for a bag, by index, after a `needs_coffee` answer: a coffee's id, or `new`. */
+  coffeeChoices?: Record<number, CoffeeChoice>;
+}
+
+export type CoffeeChoice = number | 'new';
+
+/** A question for the user: is this bean one of these close coffees, or a new one? Nothing is saved until answered. */
+export interface CoffeeQuestion {
+  index: number;
+  entered: string;
+  candidates: CloseCoffee[];
 }
 
 /** A question for the user: which registered roaster a bag means. Nothing is saved until every bag has one. */
@@ -39,6 +51,7 @@ export interface Difference {
 export type ImportResult =
   | { status: 'saved'; bagIds: number[]; differences: Difference[] }
   | { status: 'needs_roaster'; bags: RoasterQuestion[] }
+  | { status: 'needs_coffee'; bags: CoffeeQuestion[] }
   | { status: 'invalid'; errors: ContractError[] };
 
 /**
@@ -49,7 +62,10 @@ export type ImportResult =
 export function importBags(db: DatabaseSync, accountId: number, json: string, options: ImportOptions): ImportResult {
   const parsed = parseBagsJson(json, options.limits);
   if (!parsed.ok) return { status: 'invalid', errors: parsed.errors };
-  return saveDocument(db, accountId, parsed.value, 'json', options.roasterChoices);
+  return saveDocument(db, accountId, parsed.value, 'json', {
+    roasters: options.roasterChoices,
+    coffees: options.coffeeChoices,
+  });
 }
 
 /** Saves a checked document. A paste keeps each bag's raw JSON for audit; a bag typed in by hand has none. */
@@ -58,17 +74,27 @@ export function saveDocument(
   accountId: number,
   document: BagsDocument,
   source: 'json' | 'manual',
-  roasterChoices?: Record<number, number>,
+  choices: { roasters?: Record<number, number> | undefined; coffees?: Record<number, CoffeeChoice> | undefined } = {},
 ): ImportResult {
-  const options = { roasterChoices };
   const resolved: { roaster: Roaster; confirmed: boolean }[] = [];
   const questions: RoasterQuestion[] = [];
   document.bags.forEach((bag, index) => {
-    const answer = resolveRoaster(db, bag.roaster, options.roasterChoices?.[index]);
+    const answer = resolveRoaster(db, bag.roaster, choices.roasters?.[index]);
     if ('roaster' in answer) resolved.push(answer);
     else questions.push({ index, entered: bag.roaster.name, ...answer });
   });
   if (questions.length > 0) return { status: 'needs_roaster', bags: questions };
+
+  // Close matches come after the roasters, because they are looked for among the roaster's coffees.
+  const targets: CoffeeTarget[] = [];
+  const coffeeQuestions: CoffeeQuestion[] = [];
+  document.bags.forEach((bag, index) => {
+    const { roaster } = resolved[index] as { roaster: Roaster };
+    const answer = resolveCoffee(db, accountId, bag, roaster.id, choices.coffees?.[index]);
+    if (Array.isArray(answer)) coffeeQuestions.push({ index, entered: bag.coffee.name, candidates: answer });
+    targets.push(Array.isArray(answer) ? undefined : answer);
+  });
+  if (coffeeQuestions.length > 0) return { status: 'needs_coffee', bags: coffeeQuestions };
 
   const notes = resolveRoasterNotes(db, document.roaster_notes ?? []);
   if ('errors' in notes) return { status: 'invalid', errors: notes.errors };
@@ -80,7 +106,7 @@ export function saveDocument(
     const bagIds = document.bags.map((bag, index) => {
       const { roaster, confirmed } = resolved[index] as { roaster: Roaster; confirmed: boolean };
       if (confirmed) save.alias(bag.roaster.name, roaster.id);
-      return save.bag(bag, index, roaster.id);
+      return save.bag(bag, index, roaster.id, targets[index]);
     });
     for (const { roasterId, note } of notes.resolved) save.roasterNote(roasterId, note);
     db.exec('COMMIT');
@@ -89,6 +115,36 @@ export function saveDocument(
     db.exec('ROLLBACK');
     throw error;
   }
+}
+
+/** Where a bag's coffee goes: matched as usual, a new coffee, or a close coffee the user picked. */
+type CoffeeTarget = undefined | 'new' | CloseCoffee;
+
+/**
+ * For a published bean without an exact pool match, the close coffees to ask about, unless the user already picked
+ * one of them or `new`. A private bean is only ever matched exactly, among the account's own coffees.
+ */
+function resolveCoffee(
+  db: DatabaseSync,
+  accountId: number,
+  bag: ContractBag,
+  roasterId: number,
+  choice: CoffeeChoice | undefined,
+): CoffeeTarget | CloseCoffee[] {
+  if (bag.personal?.private) return undefined;
+  const nameKey = coffeeNameKey(bag.coffee.name);
+  const exact = db
+    .prepare('SELECT 1 FROM coffee WHERE owner_account_id IS NULL AND roaster_id = ? AND name_key = ?')
+    .get(roasterId, nameKey);
+  if (exact !== undefined) return undefined;
+  const candidates = closeCoffees(db, accountId, roasterId, nameKey);
+  if (choice === 'new') return 'new';
+  if (choice === undefined) return candidates.length > 0 ? candidates : undefined;
+  const chosen = candidates.find((candidate) => candidate.id === choice);
+  if (chosen === undefined) {
+    throw new Error(`The coffee chosen for ${bag.coffee.name}, coffee ${choice}, is not one of the coffees offered`);
+  }
+  return chosen;
 }
 
 export function resolveRoaster(
@@ -211,23 +267,31 @@ export class Saver {
    * The coffee a bag goes on, matched as for a new bean: the account's own private coffee for a private bean, else
    * the pool coffee with the same roaster and name, filling its gaps, or a new one. A published bag's harvest joins it.
    */
-  coffee(bag: ContractBag, index: number, roasterId: number): number {
-    const isPrivate = bag.personal?.private ?? false;
-    const coffeeId = isPrivate ? this.privateCoffee(bag, roasterId) : this.poolCoffee(bag, index, roasterId);
-    if (!isPrivate && bag.harvest !== null) {
+  coffee(bag: ContractBag, index: number, roasterId: number, target?: CoffeeTarget): number {
+    let coffeeId: number;
+    if (bag.personal?.private) coffeeId = this.privateCoffee(bag, roasterId);
+    else if (target !== undefined && target !== 'new' && target.private) coffeeId = target.id;
+    // 'new' skips the close matches but still takes an exact one, which an earlier bag of this paste may have created.
+    else coffeeId = this.poolCoffee(bag, index, roasterId, target === 'new' ? undefined : target?.id);
+    // Only a pool coffee lists harvests; a picked private coffee keeps the bag private.
+    if (bag.harvest !== null) {
       this.db
-        .prepare('INSERT OR IGNORE INTO coffee_harvest (coffee_id, harvest) VALUES (?, ?)')
-        .run(coffeeId, bag.harvest);
+        .prepare(
+          `INSERT OR IGNORE INTO coffee_harvest (coffee_id, harvest)
+           SELECT id, ? FROM coffee WHERE id = ? AND owner_account_id IS NULL`,
+        )
+        .run(bag.harvest, coffeeId);
     }
     return coffeeId;
   }
 
-  bag(bag: ContractBag, index: number, roasterId: number): number {
-    const coffeeId = this.coffee(bag, index, roasterId);
+  bag(bag: ContractBag, index: number, roasterId: number, target?: CoffeeTarget): number {
+    const coffeeId = this.coffee(bag, index, roasterId, target);
     const values: Record<string, SQLInputValue> = {
       account_id: this.accountId,
       coffee_id: coffeeId,
       ...bagColumns(bag, bag.brew.grinder === null ? null : this.grinder(bag.brew.grinder)),
+      rated_on: bag.personal?.rating == null ? null : today(),
       source: this.source,
       import_payload: this.source === 'json' ? JSON.stringify(bag) : null,
     };
@@ -245,10 +309,14 @@ export class Saver {
     return existing === undefined ? this.createCoffee(bag, roasterId, this.accountId) : Number(existing.id);
   }
 
-  private poolCoffee(bag: ContractBag, index: number, roasterId: number): number {
-    const existing = this.db
-      .prepare('SELECT * FROM coffee WHERE owner_account_id IS NULL AND roaster_id = ? AND name_key = ?')
-      .get(roasterId, coffeeNameKey(bag.coffee.name));
+  /** The pool coffee with the bag's roaster and name, or the picked one, filling its gaps; else a new one. */
+  private poolCoffee(bag: ContractBag, index: number, roasterId: number, pickedId?: number): number {
+    const existing =
+      pickedId === undefined
+        ? this.db
+            .prepare('SELECT * FROM coffee WHERE owner_account_id IS NULL AND roaster_id = ? AND name_key = ?')
+            .get(roasterId, coffeeNameKey(bag.coffee.name))
+        : this.db.prepare('SELECT * FROM coffee WHERE id = ? AND owner_account_id IS NULL').get(pickedId);
     if (existing === undefined) return this.createCoffee(bag, roasterId, null);
     const coffeeId = Number(existing.id);
 
@@ -398,4 +466,9 @@ export function bagColumns(bag: BagFields, grinderId: number | null): Record<str
     rebuy: bool(personal?.rebuy),
     note: personal?.note ?? null,
   };
+}
+
+/** Today's date, as the rating date of a rating set now. UTC, like the other dates the server keeps. */
+export function today(): string {
+  return new Date().toISOString().slice(0, 10);
 }

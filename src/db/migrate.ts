@@ -246,6 +246,15 @@ const migrations: readonly Migration[] = [
         CHECK (water_alt_tds IS NULL OR (water_alt_tds >= 0 AND water_alt_gh IS NOT NULL));
     `,
   },
+  {
+    id: 4,
+    name: 'rating date',
+    // The day the rating was last set, so the collective rating can take each account's latest rated bag.
+    sql: `
+      ALTER TABLE bag ADD COLUMN rated_on TEXT
+        CHECK (rated_on IS date(rated_on) AND (rated_on IS NULL OR rating IS NOT NULL));
+    `,
+  },
 ];
 
 /** Brings the schema up to date. Safe to run on every start: applied migrations are skipped. */

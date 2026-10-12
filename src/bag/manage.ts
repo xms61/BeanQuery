@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { type ContractError, parseBag, parseBagFields } from '../contract/bag-json.js';
-import { bagColumns, type ImportResult, Saver, saveDocument } from './import.js';
+import { bagColumns, type CoffeeChoice, type ImportResult, Saver, saveDocument, today } from './import.js';
 
 export type BagState = 'sealed' | 'open' | 'frozen' | 'finished';
 const states: readonly BagState[] = ['sealed', 'open', 'frozen', 'finished'];
@@ -13,12 +13,14 @@ export function addBag(
   db: DatabaseSync,
   accountId: number,
   input: unknown,
-  options: { roasterChoice?: number } = {},
+  options: { roasterChoice?: number; coffeeChoice?: CoffeeChoice } = {},
 ): ImportResult {
   const parsed = parseBag(input);
   if (!parsed.ok) return { status: 'invalid', errors: parsed.errors };
-  const choices = options.roasterChoice === undefined ? undefined : { 0: options.roasterChoice };
-  return saveDocument(db, accountId, { schema: 'beanquery.bags/v1', bags: [parsed.value] }, 'manual', choices);
+  return saveDocument(db, accountId, { schema: 'beanquery.bags/v1', bags: [parsed.value] }, 'manual', {
+    roasters: options.roasterChoice === undefined ? undefined : { 0: options.roasterChoice },
+    coffees: options.coffeeChoice === undefined ? undefined : { 0: options.coffeeChoice },
+  });
 }
 
 /**
@@ -42,7 +44,7 @@ export function editBag(
   db.exec('BEGIN');
   try {
     const grinderId = fields.brew.grinder === null ? null : new Saver(db, accountId).grinder(fields.brew.grinder);
-    const values = bagColumns(fields, grinderId);
+    const values = { ...bagColumns(fields, grinderId), rated_on: ratedOn(db, bagId, fields.personal?.rating ?? null) };
     const columns = Object.keys(values);
     db.prepare(
       `UPDATE bag SET ${columns.map((column) => `${column} = ?`).join(', ')} WHERE id = ? AND account_id = ?`,
@@ -74,4 +76,14 @@ export function setBagState(db: DatabaseSync, accountId: number, bagId: number, 
 /** Deletes an own bag. Its coffee stays, in the pool or as the account's private coffee. False when there is no such bag. */
 export function deleteBag(db: DatabaseSync, accountId: number, bagId: number): boolean {
   return db.prepare('DELETE FROM bag WHERE id = ? AND account_id = ?').run(bagId, accountId).changes === 1;
+}
+
+/**
+ * The rating date to store when a bag's rating becomes `rating`: today when it changed, the old date when it didn't,
+ * none without a rating. The collective rating takes each account's latest rated bag by this date.
+ */
+export function ratedOn(db: DatabaseSync, bagId: number, rating: number | null): string | null {
+  if (rating === null) return null;
+  const current = db.prepare('SELECT rating, rated_on FROM bag WHERE id = ?').get(bagId);
+  return current?.rating === rating && current.rated_on !== null ? String(current.rated_on) : today();
 }
