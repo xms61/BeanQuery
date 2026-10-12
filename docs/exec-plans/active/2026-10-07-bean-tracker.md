@@ -216,41 +216,7 @@ The columns of `bag`:
 - **Provenance:** `source` (`json` or `manual`), `import_payload` (the raw JSON, for audit).
 
 ## Accounts
-Chosen for version 1:
-- An invite code from the admin, redeemed into an account number that only the user sees.
-- Export as the only backup.
-- Passkeys later.
-
-Invites:
-- The admin creates a single-use code that expires after 14 days and sends it to a friend however they like.
-- The friend redeems it, and the server shows them a new account number once. The admin never sees it.
-- The server deletes the invite on redemption and stores no link between the two. Accounts and open invites carry only dates, never times.
-- What that does not stop:
-  - The admin knows when they sent each code, so with a few friends they can often guess who redeemed which.
-  - The admin runs the server and can read the database.
-
-  So the promise to users is that no other account sees their personal data, not that the admin can't.
-
-Account number:
-- A random secret of 100 bits, shown once, as 20 characters of Crockford base32 in groups of four (`K7QF 3M9X TR2D 8HVW PC4N`).
-- Crockford base32 skips I, L, O and U, so no character can be misread. Input ignores case, spaces and dashes.
-- Digits like Mullvad's would need 31 of them for the same strength. Mullvad's own 16 digits, about 53 bits, rely on rate limits instead.
-- Signing in means typing it.
-- The database stores only its SHA-256 hash, which can't be reversed for a random secret this long. That needs no server-side pepper, whose loss would lock out every account at once.
-- Redeeming asks the user to copy the number, download it as a file or print it, and to tick "I saved it". There is no recovery, by design. A user who loses it gets a new invite and imports their last export.
-
-Passkeys, later: a user could add a passkey (WebAuthn, discoverable credential, random user handle, display name "BeanQuery") and sign in with a fingerprint or face. The server never learns who the user is, and the account number remains the fallback. Version 1 skips them: a session lasts 90 days and renews on use, so friends rarely type the number.
-
-Alternatives considered:
-- **A recovery phrase**: the same secret as 10 to 12 words. Easier to write down; otherwise the same.
-- **End-to-end encryption**: the strongest privacy, but the server could no longer search, filter or pool anything.
-- **Local-only data**: no sync between devices.
-
-Also needed:
-- Sessions in an `HttpOnly`, `Secure`, `SameSite=Lax` cookie holding a random token stored as a hash, valid for 90 days and renewed on use, with "sign out everywhere".
-- Export as JSON in the contract, with each bag's `personal` block, and as CSV. Import from an export. Deleting the account removes every row it owns.
-- Rate limits on sign-in and redemption. Invites replace the sign-up abuse limits a public app would need.
-- No IP addresses in logs, no third-party scripts, fonts or analytics, and no bag photos stored.
+Moved to the [account model](../../design-docs/account-model.md) design doc on 2026-10-12.
 
 ## Open questions
 None right now. All were answered on 2026-10-07; see the Decision log.
@@ -260,7 +226,7 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - [x] 2026-10-07 Owner answered three rounds of questions, and delegated the rest (see Decision log)
 - [ ] Design in Figma, reviewed by the owner. Done 2026-10-07: tokens, text styles, components, and the Library, Bag detail and Add bag screens with the unregistered-roaster state, in light and dark. The owner ran the dark theme and the Add bag fixes through the Scripter plugin. Still to do: edit bag, the pool, roasters, account flows, admin, toasts and the Impressum
 - [ ] Contract: spec written 2026-10-07; JSON Schema, fixtures and the revised prompt still to do
-- [ ] Design docs written (accounts, web framework). The open questions were answered 2026-10-07
+- [ ] Design docs written. The open questions were answered 2026-10-07. Done 2026-10-12: [account model](../../design-docs/account-model.md). Still to do: the web framework, which the owner picks
 - [x] 2026-10-12 Database schema and migrations: every table of the draft data model, in `src/db/migrate.ts`, tested in `src/db/schema.test.ts`
 - [x] 2026-10-12 Roaster registry imported from every.coffee (`src/roaster/`, `pnpm roasters:import`). The live run loaded 9,152 roasters. Still to do: the owner tries a page saved from Firefox and from Chrome (see Surprises). In later steps: the upload and add-roaster screens (step 8) and the weekly job on the server (step 10)
 - [ ] Bags, import and export in the domain layer
