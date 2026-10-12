@@ -156,7 +156,9 @@ Done when a user can, on the deployed desktop web app:
    Built in five pull requests, each verified on its own:
    1. The server, the layer rule, sessions, CSRF and security headers, the rate limits, and the account flows (redeem, the account number, sign in and out, the account page with JSON export, delete) and the Impressum.
    2. The library with its filters and "Coming up", the bag detail with phase and plan dates in the user's time zone, the toasts, and setting a bag's state (the toast's "Done: frozen" needs it).
-   3. Adding bags (paste with review, roaster and coffee questions, manual entry, start from the pool), editing, re-paste with "Use mine", state and delete, and importing an export.
+   3. Adding bags, in two pull requests:
+      - 3a: pasting with a review step, the roaster and coffee questions, "Use mine", importing an export, deleting a bag, and making a bean private or publishing it.
+      - 3b: entering a bag by hand, starting from the pool, editing a bag and its coffee's facts (with the rename collision), re-pasting onto a bag, and the rating and notes.
    4. The pool and pool coffees, the roasters, the gear, and the admin screens.
    5. The end-to-end test, the CSV export, and the fonts.
 10. **Deploy to Hetzner**, in its own exec plan: HTTPS, logs without IP addresses, nightly backups of the SQLite file with a tested restore, and the nightly collective-rating rebuild and weekly roaster import as jobs.
@@ -239,7 +241,7 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - [x] 2026-10-12 Bags, import and export in the domain layer: import, export and re-paste (`src/bag/`), manual entry, edits, state and delete, the toasts, and editing coffee facts with the rename rule and "Use mine" (`src/coffee/edit.ts`)
 - [x] 2026-10-12 Pool, matching and collective rating: close-match questions, pool search, the collective-rating rebuild (`src/coffee/match.ts`, `search.ts`, `rating.ts`), and making a bean private or public later, from the bag page or by re-pasting `personal.private` (`src/coffee/privacy.ts`)
 - [x] 2026-10-12 Accounts by invitation, and admin: account numbers, invites, sessions, deleting an account, and the bootstrap command `pnpm admin` (`src/account/`); the admin tools for invites, accounts, roasters and aliases, and pool coffees with edit, merge, delete and undo (`src/admin/`). Their screens come with the web layer (step 9)
-- [ ] Web layer and screens. Done 2026-10-12: part 1, the server, layer rule, sessions and account flows (`src/web/`, `src/layers.test.ts`); part 2, the library with filters, "Coming up" and toasts, the bag page, setting a bag's state, and each account's time zone (`src/bag/library.ts`, `src/account/time-zone.ts`, `src/web/routes/library.tsx`). Still to do: parts 3 to 5
+- [ ] Web layer and screens. Done 2026-10-12: part 1, the server, layer rule, sessions and account flows (`src/web/`, `src/layers.test.ts`); part 2, the library with filters, "Coming up" and toasts, the bag page, setting a bag's state, and each account's time zone (`src/bag/library.ts`, `src/account/time-zone.ts`, `src/web/routes/library.tsx`); part 3a, pasting with review and questions, "Use mine", import, delete, private and publish (`src/web/routes/add.tsx`, `src/web/routes/bag-actions.tsx`). Still to do: part 3b, then parts 4 and 5
 - [ ] Deployed (separate exec plan)
 - [ ] Project docs updated for multi-user
 
@@ -337,6 +339,11 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - 2026-10-12: Each account stores its time zone, reported by the browser in a hidden field when signing in or redeeming, and changeable on the account page. A cookie would have been simpler but would break the Impressum's promise of no cookie besides the session's. Without one, the server's `DEFAULT_TIME_ZONE` applies.
 - 2026-10-12: A bag's phase on a day: `resting` before the rest window opens, `rested` from then until the peak, `peak` inside the peak window, `past` after it; `no_roast_date` and `no_plan` otherwise. The rest window is when the coffee is rested enough to drink, so it may overlap the peak.
 - 2026-10-12: Toasts show on the library, the page the app opens to. The library's "Coming up" card also lists today's due events first, as "Today", so it reads as one agenda; this replaces the earlier entry's "not today itself" for the page, while `reminders` still returns them apart. Neither follows the library filters.
+
+- 2026-10-12: Pasting checks before it saves: `importBags` with `preview` runs the whole save in a transaction and rolls it back, reporting each bag's roaster match and whether its coffee joins or creates one, and the pool differences. The same form posts to `/add/check` and, from the review, to `/add/save`, carrying the JSON and the answers so far.
+- 2026-10-12: A roaster or coffee pick that wasn't offered, because the JSON changed after it was answered or the form was forged, gets the question again instead of an error. It still never stores an alias or saves anything. This replaces the earlier throw.
+- 2026-10-12: The review's "Keep this bean private" tick sets `personal.private` on every pasted bag. Only importing an export may exceed the 1 MB form limit: `/import` takes up to 21 MB.
+- 2026-10-12: Assets are served with a one-year immutable cache and linked as `/assets/app.css?v=<content hash>`, so a deploy's new styles reach browsers at once.
 
 ## Surprises
 - 2026-10-12: pnpm 12 checks `node_modules` against the lockfile before running a script and installs to match. Running `pnpm verify` on a branch without Hono removed Hono from `node_modules`, and later commands hung waiting on the install. After switching branches, run `pnpm install` first.

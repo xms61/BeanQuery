@@ -26,6 +26,8 @@ describe('signed-out visitors', () => {
     expect(response.headers.get('strict-transport-security')).toMatch(/max-age=\d{8}/);
     expect(response.headers.get('cache-control')).toBe('no-store');
     expect((await request('/assets/app.css')).headers.get('content-type')).toContain('text/css');
+    // Pages link the assets by a hash of their content, so a deploy's new ones are fetched despite the long cache.
+    expect(await response.text()).toMatch(/href="\/assets\/app\.css\?v=[0-9a-f]{10}"/);
   });
 });
 
@@ -122,7 +124,7 @@ describe('sessions', () => {
     const { cookie } = await redeemed(request, db);
     for (const path of ['/assets/app.css', '/assets/app.js']) {
       const response = await request(path, { cookie });
-      expect([path, response.headers.get('cache-control')]).toEqual([path, 'public, max-age=3600']);
+      expect([path, response.headers.get('cache-control')]).toEqual([path, 'public, max-age=31536000, immutable']);
       expect(response.headers.get('set-cookie')).toBeNull();
     }
   });

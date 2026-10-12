@@ -12,6 +12,8 @@ import { type Env, type Limits, sessionCookieName, setSessionCookie, type WebCon
 import { AppPage, CardPage } from './layout.js';
 import { RateLimiter } from './rate-limit.js';
 import { accountRoutes } from './routes/account.js';
+import { addRoutes } from './routes/add.js';
+import { bagActionRoutes } from './routes/bag-actions.js';
 import { libraryRoutes } from './routes/library.js';
 import { pageRoutes } from './routes/pages.js';
 
@@ -43,19 +45,19 @@ export function createApp(config: WebConfig): Hono<Env> {
   );
   app.use(config.origin === undefined ? csrf() : csrf({ origin: config.origin }));
   // Before any route parses a body. A paste is at most 256 KB of JSON, which form encoding can about triple.
-  app.use(
-    bodyLimit({
-      maxSize: 1024 * 1024,
-      onError: (c) =>
-        c.html(
-          <CardPage title="Too large">
-            <h1>Too large</h1>
-            <p class="muted">That was more than 1 MB.</p>
-          </CardPage>,
-          413,
-        ),
-    }),
-  );
+  const formLimit = bodyLimit({
+    maxSize: 1024 * 1024,
+    onError: (c) =>
+      c.html(
+        <CardPage title="Too large">
+          <h1>Too large</h1>
+          <p class="muted">That was more than 1 MB.</p>
+        </CardPage>,
+        413,
+      ),
+  });
+  // An export upload (/import) sets its own, larger limit.
+  app.use((c, next) => (c.req.path === '/import' ? next() : formLimit(c, next)));
   app.use(async (c, next) => {
     // The assets are public and cacheable: no session is read or renewed, so no cache can keep a session cookie.
     if (c.req.path.startsWith('/assets/')) return next();
@@ -76,17 +78,22 @@ export function createApp(config: WebConfig): Hono<Env> {
   });
 
   app.get('/assets/app.css', (c) =>
-    c.body(styleSheet, 200, { 'Content-Type': 'text/css; charset=utf-8', 'Cache-Control': 'public, max-age=3600' }),
+    c.body(styleSheet, 200, {
+      'Content-Type': 'text/css; charset=utf-8',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    }),
   );
   app.get('/assets/app.js', (c) =>
     c.body(appScript, 200, {
       'Content-Type': 'text/javascript; charset=utf-8',
-      'Cache-Control': 'public, max-age=3600',
+      'Cache-Control': 'public, max-age=31536000, immutable',
     }),
   );
 
   app.route('/', accountRoutes);
   app.route('/', libraryRoutes);
+  app.route('/', bagActionRoutes);
+  app.route('/', addRoutes);
   app.route('/', pageRoutes);
 
   // Logged without the request, so no address, cookie or pasted text reaches the log; the page says nothing internal.

@@ -251,7 +251,7 @@ function AccountPage(props: { admin: boolean; bags: number; privateBags: number;
       <div class="grid">
         <div class="stack">
           <section class="card">
-            <h2>Export</h2>
+            <h2>Export and import</h2>
             <p class="muted small">
               Your export is your only backup: every bag with your plan, brew, rating and notes, private beans included.
               It imports back into any account.
@@ -261,6 +261,15 @@ function AccountPage(props: { admin: boolean; bags: number; privateBags: number;
                 Download JSON
               </a>
             </div>
+            <form method="post" action="/import" enctype="multipart/form-data" class="actions">
+              <label class="field">
+                Import an export
+                <input type="file" name="file" accept="application/json,.json" required />
+              </label>
+              <button class="button secondary" type="submit">
+                Import
+              </button>
+            </form>
             <table class="rows">
               <tbody>
                 <tr>

@@ -183,13 +183,14 @@ describe('importBags', () => {
       db.close();
     });
 
-    test('refuses a choice that was not offered, and stores no alias, so no account can redirect a name for everyone', () => {
+    test('asks again for a choice that was not offered, and stores no alias, so no account can redirect a name for everyone', () => {
       const db = seeded();
       const doc = document();
       doc.bags = [doc.bags[2]];
       doc.bags[0].roaster.name = 'Tanat Coffee Roasters';
 
-      expect(() => paste(db, 1, doc, { 0: 1 })).toThrow(/not one of the roasters offered/);
+      // A stale answer (the JSON changed after it) or a forged one: the question comes back.
+      expect(paste(db, 1, doc, { 0: 1 })).toMatchObject({ status: 'needs_roaster', bags: [{ index: 0 }] });
       expect(count(db, 'roaster_alias') + count(db, 'bag')).toBe(0);
       db.close();
     });
@@ -216,13 +217,13 @@ describe('importBags', () => {
       db.close();
     });
 
-    test('refuses a roaster choice that is not a registered roaster', () => {
+    test('asks again for a roaster choice that is not a registered roaster', () => {
       const db = seeded();
       const doc = document();
       doc.bags = [doc.bags[0]];
       doc.bags[0].roaster.name = 'ROSE';
 
-      expect(() => paste(db, 1, doc, { 0: 99 })).toThrow(/roaster 99/);
+      expect(paste(db, 1, doc, { 0: 99 })).toMatchObject({ status: 'needs_roaster', bags: [{ reason: 'ambiguous' }] });
       expect(count(db, 'bag')).toBe(0);
       db.close();
     });
@@ -414,5 +415,52 @@ describe('importBags', () => {
       expect(count(db, 'bag')).toBe(60);
       db.close();
     });
+  });
+});
+
+describe('previewing an import', () => {
+  test('says what saving would do, and saves nothing', () => {
+    const db = seeded();
+    // Account 2 already put Ethiopia Sasaba in the pool, with a different region.
+    const first = document();
+    first.bags = [first.bags[0]];
+    first.bags[0].coffee.region = 'Sidama';
+    paste(db, 2, first);
+    const before = count(db, 'bag') + count(db, 'coffee') + count(db, 'coffee_edit') + count(db, 'roaster_alias');
+
+    const doc = document();
+    doc.bags = [doc.bags[0], doc.bags[2]];
+    doc.bags[1].personal = { private: true };
+    const result = importBags(db, 1, JSON.stringify(doc), { limits: pasteLimits, preview: true });
+
+    expect(result).toEqual({
+      status: 'preview',
+      bags: [
+        { roaster: 'Nord Kaffe', roasterMatch: 'name', coffee: 'joins_pool' },
+        { roaster: 'Tanat', roasterMatch: 'name', coffee: 'new_private' },
+      ],
+      differences: [{ index: 0, field: 'region', pool: 'Sidama', yours: 'Guji' }],
+    });
+    expect(count(db, 'bag') + count(db, 'coffee') + count(db, 'coffee_edit') + count(db, 'roaster_alias')).toBe(before);
+    db.close();
+  });
+
+  test('marks a roaster the user picked, and a coffee that would be new in the pool', () => {
+    const db = seeded();
+    const doc = document();
+    doc.bags = [doc.bags[0]];
+    doc.bags[0].roaster = { name: 'Rose' };
+    const rose = Number(db.prepare("SELECT id FROM roaster WHERE slug = 'rose-oslo'").get()?.id);
+    const result = importBags(db, 1, JSON.stringify(doc), {
+      limits: pasteLimits,
+      preview: true,
+      roasterChoices: { 0: rose },
+    });
+    expect(result).toMatchObject({
+      status: 'preview',
+      bags: [{ roaster: 'Rose', roasterMatch: 'picked', coffee: 'new_pool' }],
+    });
+    expect(count(db, 'bag')).toBe(0);
+    db.close();
   });
 });
