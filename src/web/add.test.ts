@@ -113,12 +113,24 @@ describe('pasting a bag', () => {
 });
 
 describe('a bag’s actions', () => {
-  test('delete needs the tick and an own bag', async () => {
+  test('delete goes through a page that names the bag, and needs the confirmation and an own bag', async () => {
     const { db, request } = setup();
     const me = await redeemed(request, db);
     const them = await redeemed(request, db);
     addBag(db, me.accountId, structuredClone(fixture.bags[0]));
     const id = Number(db.prepare('SELECT id FROM bag').get()?.id);
+
+    const bagPage = await (await request(`/bags/${id}`, { cookie: me.cookie })).text();
+    expect(bagPage).toContain(`<a class="button danger" href="/bags/${id}/delete">Delete bag…</a>`);
+    expect(bagPage).toContain('<button class="button secondary" type="submit">Make this bean private</button>');
+    const confirmPage = await request(`/bags/${id}/delete`, { cookie: me.cookie });
+    const confirmHtml = await confirmPage.text();
+    expect(confirmHtml).toContain('Delete Ethiopia Sasaba from Nord Kaffe?');
+    expect(confirmHtml).toContain(`action="/bags/${id}/delete"`);
+    expect(confirmHtml).toContain('name="confirm" value="yes"');
+    expect(confirmHtml).toContain(`href="/bags/${id}"`);
+    expect((await request(`/bags/${id}/delete`, { cookie: them.cookie })).status).toBe(404);
+    expect(bagCount(db)).toBe(1);
 
     expect((await request(`/bags/${id}/delete`, { form: {}, cookie: me.cookie })).status).toBe(400);
     expect((await request(`/bags/${id}/delete`, { form: { confirm: 'yes' }, cookie: them.cookie })).status).toBe(404);

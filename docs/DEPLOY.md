@@ -82,7 +82,7 @@ systemctl list-timers 'beanquery-*'
 Run the backup once by hand and check that a file appears: `sudo systemctl start beanquery-backup.service && sudo ls /srv/beanquery/backups`.
 
 ## Checks after setup
-- Sign in at `https://<domain>` from a computer and a phone. Paste a bag and see it in the library.
+- Sign in at `https://<domain>` from a computer. Paste a bag and see it in the library.
 - `curl -sI http://<domain>` redirects to HTTPS, and `curl -sI https://<domain>/sign-in` shows `content-security-policy` and `strict-transport-security`.
 - ysto still answers on its own domain.
 - *Owner machine*: `nmap -Pn -p- <domain>` shows only 22, 80 and 443 open.

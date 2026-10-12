@@ -518,7 +518,7 @@ function BagPage(props: { detail: NonNullable<ReturnType<typeof bagDetail>>; tod
               action={`/bags/${props.detail.bagId}/${props.detail.inPool ? 'private' : 'publish'}`}
               class="actions"
             >
-              <button class="button quiet" type="submit">
+              <button class="button secondary" type="submit">
                 {props.detail.inPool ? 'Make this bean private' : 'Publish to the pool'}
               </button>
             </form>
@@ -539,14 +539,11 @@ function BagPage(props: { detail: NonNullable<ReturnType<typeof bagDetail>>; tod
           </section>
           <section class="card">
             <h2>Delete bag</h2>
-            <form method="post" action={`/bags/${props.detail.bagId}/delete`}>
-              <label class="check">
-                <input type="checkbox" name="confirm" value="yes" required /> Delete this bag
-              </label>
-              <button class="button quiet" type="submit">
-                Delete
-              </button>
-            </form>
+            <div class="actions">
+              <a class="button danger" href={`/bags/${props.detail.bagId}/delete`}>
+                Delete bag…
+              </a>
+            </div>
             <p class="muted small">Its coffee stays, in the pool or as your private coffee.</p>
           </section>
         </div>
