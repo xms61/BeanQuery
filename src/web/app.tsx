@@ -14,6 +14,7 @@ import { RateLimiter } from './rate-limit.js';
 import { accountRoutes } from './routes/account.js';
 import { addRoutes } from './routes/add.js';
 import { bagActionRoutes } from './routes/bag-actions.js';
+import { editRoutes } from './routes/edit.js';
 import { libraryRoutes } from './routes/library.js';
 import { pageRoutes } from './routes/pages.js';
 
@@ -94,6 +95,7 @@ export function createApp(config: WebConfig): Hono<Env> {
   app.route('/', libraryRoutes);
   app.route('/', bagActionRoutes);
   app.route('/', addRoutes);
+  app.route('/', editRoutes);
   app.route('/', pageRoutes);
 
   // Logged without the request, so no address, cookie or pasted text reaches the log; the page says nothing internal.

@@ -8,7 +8,7 @@ import { migrate } from '../db/migrate.js';
 import { openDatabase } from '../db.js';
 import { importRoasters } from '../roaster/import.js';
 import { rebuildCollectiveRatings } from './rating.js';
-import { searchPool } from './search.js';
+import { searchPool, startingPoint } from './search.js';
 
 const fixture = JSON.parse(
   readFileSync(new URL('../contract/fixtures/owner-bags-2026-10-12.json', import.meta.url), 'utf8'),
@@ -94,6 +94,22 @@ describe('searchPool', () => {
     }
     rebuildCollectiveRatings(db);
     expect(searchPool(db, 1, { query: 'danta' })[0]?.rating).toEqual({ value: 4.5, band: '3+' });
+    db.close();
+  });
+});
+
+describe('startingPoint', () => {
+  test('gives a pool coffee or an own private one with its roaster, never another account’s private coffee', () => {
+    const db = seeded();
+    const secret = Number(db.prepare("SELECT id FROM coffee WHERE name = 'Secret Sasaba'").get()?.id);
+    expect(startingPoint(db, 3, 1)).toMatchObject({
+      roaster: 'Nord Kaffe',
+      coffee: { name: 'Ethiopia Sasaba', region: 'Guji' },
+      private: false,
+    });
+    expect(startingPoint(db, 2, secret)).toMatchObject({ coffee: { name: 'Secret Sasaba' }, private: true });
+    expect(startingPoint(db, 3, secret)).toBeUndefined();
+    expect(startingPoint(db, 3, 999)).toBeUndefined();
     db.close();
   });
 });

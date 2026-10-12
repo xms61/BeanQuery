@@ -2,6 +2,7 @@ import { type Context, Hono } from 'hono';
 import { bagDetail, type LibraryBag, type LibraryFilter, library, type Phase } from '../../bag/library.js';
 import { type BagState, setBagState } from '../../bag/manage.js';
 import { dismissMidPeak, type Reminder, reminders } from '../../bag/reminders.js';
+import { bagToForm, VerdictFields } from '../bag-form.js';
 import { Legend, PhasePill, PlanBar, RatingBeans } from '../components.js';
 import { type Env, requireAccount, todayFor } from '../context.js';
 import {
@@ -323,7 +324,17 @@ function BagPage(props: { detail: NonNullable<ReturnType<typeof bagDetail>>; tod
       <nav class="crumbs small muted" aria-label="Breadcrumb">
         <a href="/">Library</a> / {facts.name}
       </nav>
-      <p class="muted">{bag.roaster.name}</p>
+      <div class="bag-tools">
+        <p class="muted">{bag.roaster.name}</p>
+        <div class="actions">
+          <a class="button secondary" href={`/bags/${props.detail.bagId}/repaste`}>
+            Paste JSON onto it
+          </a>
+          <a class="button secondary" href={`/bags/${props.detail.bagId}/edit`}>
+            Edit bag
+          </a>
+        </div>
+      </div>
       <div class="bag-head">
         <div>
           <h1 class="display">{facts.name}</h1>
@@ -493,7 +504,12 @@ function BagPage(props: { detail: NonNullable<ReturnType<typeof bagDetail>>; tod
               Only you see this rating; it joins the collective rating without your account
               {props.detail.inPool ? '.' : ' once the bean is in the pool.'}
             </p>
-            {bag.personal?.note && <p class="note-text">{bag.personal.note}</p>}
+            <form method="post" action={`/bags/${props.detail.bagId}/verdict`} class="verdict">
+              <VerdictFields values={bagToForm(bag)} />
+              <button class="button secondary" type="submit">
+                Save rating and notes
+              </button>
+            </form>
           </section>
           <section class="card quiet">
             <p class="muted small">{props.detail.inPool ? 'In the pool' : 'Private'}</p>

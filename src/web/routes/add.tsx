@@ -11,6 +11,7 @@ import {
   parseBagsJson,
   pasteLimits,
 } from '../../contract/bag-json.js';
+import { AddTabs } from '../components.js';
 import { type Env, requireAccount, todayFor } from '../context.js';
 import { origin, processLabel } from '../format.js';
 import { AppPage } from '../layout.js';
@@ -19,7 +20,7 @@ import { AppPage } from '../layout.js';
 export const addRoutes = new Hono<Env>();
 
 /** The answers a form carries: roaster and coffee picks by bag index, and the private tick, if the review set it. */
-interface Answers {
+export interface Answers {
   roasters: Record<number, number>;
   coffees: Record<number, CoffeeChoice>;
   private: boolean | undefined;
@@ -126,7 +127,7 @@ addRoutes.post(
 );
 
 /** Reads `roaster_<index>`, `coffee_<index>` and `private` from a posted form. */
-function readAnswers(body: Record<string, unknown>): Answers {
+export function readAnswers(body: Record<string, unknown>): Answers {
   const answers: Answers = { roasters: {}, coffees: {}, private: undefined };
   for (const [key, value] of Object.entries(body)) {
     if (typeof value !== 'string') continue;
@@ -181,6 +182,7 @@ function AddPage(props: { admin: boolean; json: string; answers: Answers; result
       <div class="page-head">
         <h1>Add bag</h1>
       </div>
+      <AddTabs current="paste" />
       <form method="post" action="/add/check" class="add-grid">
         <section class="card">
           <label class="field">
@@ -233,7 +235,7 @@ function AddPage(props: { admin: boolean; json: string; answers: Answers; result
 }
 
 /** The errors, the questions with the earlier answers kept, or nothing for a preview (shown by the caller). */
-function Outcome(props: { result: Outcome; answers: Answers }) {
+export function Outcome(props: { result: Outcome; answers: Answers }) {
   const { result, answers } = props;
   const kept = (
     <>
@@ -532,7 +534,7 @@ export function Differences(props: {
   );
 }
 
-function SavedPage(props: { c: Context<Env>; accountId: number; bagIds: number[]; differences: Difference[] }) {
+export function SavedPage(props: { c: Context<Env>; accountId: number; bagIds: number[]; differences: Difference[] }) {
   return (
     <AppPage title="Saved" section="add" admin={props.c.var.admin}>
       <h1>Saved</h1>

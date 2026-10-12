@@ -111,3 +111,21 @@ export function Legend() {
     </div>
   );
 }
+
+/** The three ways to add a bag, as tabs over the add pages. */
+export function AddTabs(props: { current: 'paste' | 'manual' | 'pool' }) {
+  const tabs = [
+    ['paste', '/add', 'Paste JSON'],
+    ['manual', '/add/manual', 'Enter by hand'],
+    ['pool', '/add/pool', 'Start from the pool'],
+  ] as const;
+  return (
+    <nav class="tabs" aria-label="Ways to add a bag">
+      {tabs.map(([key, href, label]) => (
+        <a class="tab" href={href} aria-current={key === props.current ? 'page' : undefined}>
+          {label}
+        </a>
+      ))}
+    </nav>
+  );
+}

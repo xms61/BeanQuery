@@ -7,7 +7,7 @@ import { openDatabase } from '../db.js';
 import { importRoasters } from '../roaster/import.js';
 import { exportBags } from './export.js';
 import { importBags } from './import.js';
-import { addBag, deleteBag, editBag, setBagState } from './manage.js';
+import { addBag, deleteBag, editBag, rateBag, saveBagEdit, setBagState } from './manage.js';
 
 const fixture = JSON.parse(
   readFileSync(new URL('../contract/fixtures/owner-bags-2026-10-12.json', import.meta.url), 'utf8'),
@@ -164,6 +164,103 @@ describe('editBag', () => {
     expect(editBag(db, 2, 1, { ...fields, lot: 'Stolen' })).toEqual({ status: 'not_found' });
     expect(editBag(db, 2, 999, fields)).toEqual({ status: 'not_found' });
     expect(db.prepare('SELECT lot FROM bag WHERE id = 1').get()).toEqual({ lot: null });
+    db.close();
+  });
+});
+
+/** The edit form's two halves for a fixture bag: its own fields and its coffee's facts. */
+function editInput(index: number) {
+  const { roaster: _roaster, coffee, ...fields } = structuredClone(fixture.bags[index]);
+  return { fields, coffee };
+}
+
+describe('saveBagEdit', () => {
+  test("saves the bag's fields and its pool coffee's facts together, logging each changed fact", () => {
+    const db = seeded();
+    const input = editInput(0);
+    input.fields.lot = 'Lot 7';
+    input.coffee.region = 'Sidama';
+
+    expect(saveBagEdit(db, 1, 1, input)).toEqual({ status: 'saved' });
+    expect(exportBags(db, 1).bags[0]).toMatchObject({ lot: 'Lot 7', coffee: { region: 'Sidama' } });
+    expect(db.prepare('SELECT field, old_value, new_value FROM coffee_edit').all()).toEqual([
+      { field: 'region', old_value: 'Guji', new_value: 'Sidama' },
+    ]);
+    db.close();
+  });
+
+  test('refuses a rename onto another coffee of the roaster and saves nothing, not even the bag fields', () => {
+    const db = seeded();
+    const input = editInput(0);
+    input.fields.lot = 'Lot 7';
+    input.coffee.name = 'Peru La Danta';
+
+    expect(saveBagEdit(db, 1, 1, input)).toEqual({ status: 'name_taken', coffeeId: 2 });
+    expect(db.prepare('SELECT lot, coffee_id FROM bag WHERE id = 1').get()).toEqual({ lot: null, coffee_id: 1 });
+    expect(db.prepare('SELECT name FROM coffee WHERE id = 1').get()).toEqual({ name: 'Ethiopia Sasaba' });
+    db.close();
+  });
+
+  test('with the move as the answer, saves the bag fields and moves the bag, leaving both coffees as they were', () => {
+    const db = seeded();
+    const input = editInput(0);
+    input.fields.lot = 'Lot 7';
+    input.coffee.name = 'Peru La Danta';
+
+    expect(saveBagEdit(db, 1, 1, input, { moveTo: 2 })).toEqual({ status: 'saved' });
+    expect(db.prepare('SELECT lot, coffee_id FROM bag WHERE id = 1').get()).toEqual({ lot: 'Lot 7', coffee_id: 2 });
+    expect(db.prepare('SELECT name FROM coffee WHERE id IN (1, 2) ORDER BY id').all()).toEqual([
+      { name: 'Ethiopia Sasaba' },
+      { name: 'Peru La Danta' },
+    ]);
+    expect(db.prepare('SELECT count(*) AS n FROM coffee_edit').get()).toEqual({ n: 0 });
+    // Another roaster's coffee is no place to move to.
+    expect(saveBagEdit(db, 1, 1, input, { moveTo: 3 })).toEqual({ status: 'not_found' });
+    db.close();
+  });
+
+  test('names the fields of both halves that break the contract, the coffee ones under coffee.', () => {
+    const db = seeded();
+    const input = editInput(0);
+    input.fields.weight.grams = 0;
+    input.coffee.name = '';
+
+    const result = saveBagEdit(db, 1, 1, input);
+    expect(result.status).toBe('invalid');
+    expect(result.status === 'invalid' && result.errors.map((e) => e.path)).toEqual(['weight.grams', 'coffee.name']);
+    db.close();
+  });
+
+  test("can't edit another account's bag or, through it, the coffee", () => {
+    const db = seeded();
+    const input = editInput(0);
+    input.coffee.region = 'Stolen';
+    expect(saveBagEdit(db, 2, 1, input)).toEqual({ status: 'not_found' });
+    expect(db.prepare('SELECT region FROM coffee WHERE id = 1').get()).toEqual({ region: 'Guji' });
+    db.close();
+  });
+});
+
+describe('rateBag', () => {
+  test('sets the rating, rebuy and note, dated today, and keeps every other field', () => {
+    const db = seeded();
+    setBagState(db, 1, 1, 'open');
+    expect(rateBag(db, 1, 1, { rating: 4.5, rebuy: true, note: 'Bright' })).toEqual({ status: 'saved' });
+    expect(
+      db.prepare('SELECT state, rating, rated_on IS NOT NULL AS dated, rebuy, note, grind FROM bag WHERE id = 1').get(),
+    ).toEqual({
+      state: 'open',
+      rating: 4.5,
+      dated: 1,
+      rebuy: 1,
+      note: 'Bright',
+      grind: '4.2',
+    });
+    expect(rateBag(db, 1, 1, { rating: 4.2, rebuy: null, note: null })).toMatchObject({
+      status: 'invalid',
+      errors: [{ path: 'personal.rating' }],
+    });
+    expect(rateBag(db, 2, 1, { rating: 1, rebuy: null, note: null })).toEqual({ status: 'not_found' });
     db.close();
   });
 });
