@@ -96,3 +96,102 @@ export function startingPoint(
   if (row === undefined || coffee === undefined) return undefined;
   return { roaster: String(row.roaster), coffee, private: row.owner_account_id !== null };
 }
+
+export interface PoolFilter {
+  query?: string;
+  roaster?: string;
+  country?: string;
+  process?: string;
+  variety?: string;
+}
+
+/**
+ * The pool page: pool coffees only, never a private one, matching the query and the picked roaster, country, process
+ * and variety, with the values each of those can take among the query's matches.
+ */
+export function browsePool(
+  db: DatabaseSync,
+  accountId: number,
+  filter: PoolFilter = {},
+): {
+  coffees: PoolCoffee[];
+  options: { roasters: string[]; countries: string[]; processes: string[]; varieties: string[] };
+} {
+  const matches = searchPool(db, accountId, filter.query === undefined ? {} : { query: filter.query });
+  const distinct = (values: (string | null)[]) =>
+    [...new Set(values.filter((v): v is string => v !== null && v !== ''))].sort((a, b) => a.localeCompare(b));
+  return {
+    coffees: matches.filter(
+      (coffee) =>
+        (filter.roaster === undefined || coffee.roaster === filter.roaster) &&
+        (filter.country === undefined || coffee.country === filter.country) &&
+        (filter.process === undefined || coffee.process === filter.process) &&
+        (filter.variety === undefined || coffee.varieties.includes(filter.variety)),
+    ),
+    options: {
+      roasters: distinct(matches.map((c) => c.roaster)),
+      countries: distinct(matches.map((c) => c.country)),
+      processes: distinct(matches.map((c) => c.process)),
+      varieties: distinct(matches.flatMap((c) => c.varieties)),
+    },
+  };
+}
+
+export interface CoffeePage {
+  coffeeId: number;
+  roaster: { id: number; name: string; slug: string; source: 'every_coffee' | 'admin' };
+  facts: CoffeeFacts;
+  private: boolean;
+  harvests: string[];
+  rating: { value: number; band: string } | null;
+  /** The account's own bags on this coffee, newest roast first. */
+  bags: { bagId: number; roastDate: string | null; harvest: string | null; state: string }[];
+}
+
+/**
+ * A coffee's page: a pool coffee for any account, or the account's own private coffee. Undefined for a missing coffee
+ * and for another account's private one, alike. Lists only the account's own bags on it.
+ */
+export function coffeePage(db: DatabaseSync, accountId: number, coffeeId: number): CoffeePage | undefined {
+  const row = db
+    .prepare(
+      `SELECT c.owner_account_id, r.id AS roaster_id, r.name, r.slug, r.source, cr.rating_rounded, cr.account_band
+       FROM coffee c JOIN roaster r ON r.id = c.roaster_id LEFT JOIN coffee_rating cr ON cr.coffee_id = c.id
+       WHERE c.id = ? AND (c.owner_account_id IS NULL OR c.owner_account_id = ?)`,
+    )
+    .get(coffeeId, accountId);
+  const facts = row === undefined ? undefined : readCoffee(db, coffeeId);
+  if (row === undefined || facts === undefined) return undefined;
+  const inPool = row.owner_account_id === null;
+  return {
+    coffeeId,
+    roaster: {
+      id: Number(row.roaster_id),
+      name: String(row.name),
+      slug: String(row.slug),
+      source: row.source === 'admin' ? 'admin' : 'every_coffee',
+    },
+    facts,
+    private: !inPool,
+    harvests: db
+      .prepare('SELECT harvest FROM coffee_harvest WHERE coffee_id = ? ORDER BY harvest')
+      .all(coffeeId)
+      .map((h) => String(h.harvest)),
+    rating:
+      inPool && row.rating_rounded !== null
+        ? { value: Number(row.rating_rounded), band: String(row.account_band) }
+        : null,
+    bags: db
+      .prepare(
+        `SELECT id, roast_date, harvest, state FROM bag WHERE coffee_id = ? AND account_id = ?
+         ORDER BY roast_date IS NULL, roast_date DESC, id DESC`,
+      )
+      .all(coffeeId, accountId)
+      .map((b) => ({
+        bagId: Number(b.id),
+        roastDate: b.roast_date === null ? null : String(b.roast_date),
+        harvest: b.harvest === null ? null : String(b.harvest),
+        state: String(b.state),
+      })),
+  };
+}

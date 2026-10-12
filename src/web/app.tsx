@@ -17,6 +17,7 @@ import { bagActionRoutes } from './routes/bag-actions.js';
 import { editRoutes } from './routes/edit.js';
 import { libraryRoutes } from './routes/library.js';
 import { pageRoutes } from './routes/pages.js';
+import { poolRoutes } from './routes/pool.js';
 
 export function createApp(config: WebConfig): Hono<Env> {
   // Checked here, at start, so a typo stops the server instead of failing every signed-in page later.
@@ -96,6 +97,7 @@ export function createApp(config: WebConfig): Hono<Env> {
   app.route('/', bagActionRoutes);
   app.route('/', addRoutes);
   app.route('/', editRoutes);
+  app.route('/', poolRoutes);
   app.route('/', pageRoutes);
 
   // Logged without the request, so no address, cookie or pasted text reaches the log; the page says nothing internal.

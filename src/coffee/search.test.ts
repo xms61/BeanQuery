@@ -8,7 +8,7 @@ import { migrate } from '../db/migrate.js';
 import { openDatabase } from '../db.js';
 import { importRoasters } from '../roaster/import.js';
 import { rebuildCollectiveRatings } from './rating.js';
-import { searchPool, startingPoint } from './search.js';
+import { browsePool, coffeePage, searchPool, startingPoint } from './search.js';
 
 const fixture = JSON.parse(
   readFileSync(new URL('../contract/fixtures/owner-bags-2026-10-12.json', import.meta.url), 'utf8'),
@@ -110,6 +110,38 @@ describe('startingPoint', () => {
     expect(startingPoint(db, 2, secret)).toMatchObject({ coffee: { name: 'Secret Sasaba' }, private: true });
     expect(startingPoint(db, 3, secret)).toBeUndefined();
     expect(startingPoint(db, 3, 999)).toBeUndefined();
+    db.close();
+  });
+});
+
+describe('browsePool', () => {
+  test('filters pool coffees by roaster, country, process and variety, offering the values among the matches', () => {
+    const db = seeded();
+    const all = browsePool(db, 3);
+    expect(all.coffees).toHaveLength(5);
+    expect(all.options.roasters).toEqual(['Nord Kaffe', 'Tanat']);
+    expect(names(browsePool(db, 2).coffees)).not.toContain('Secret Sasaba');
+    expect(names(browsePool(db, 2, { roaster: 'Nord Kaffe', country: 'Peru' }).coffees)).toEqual(['Peru La Danta']);
+    expect(names(browsePool(db, 3, { variety: 'Mixed Heirloom' }).coffees)).toEqual(['Ethiopia Sasaba']);
+    expect(browsePool(db, 3, { query: 'tanat' }).options.roasters).toEqual(['Tanat']);
+    db.close();
+  });
+});
+
+describe('coffeePage', () => {
+  test("shows a pool coffee with its harvests and only the viewer's bags, and another's private coffee not at all", () => {
+    const db = seeded();
+    expect(coffeePage(db, 1, 1)).toMatchObject({
+      roaster: { name: 'Nord Kaffe', slug: 'nord-kaffe' },
+      facts: { name: 'Ethiopia Sasaba' },
+      private: false,
+      harvests: ['2025/26'],
+      bags: [{ bagId: 1, harvest: '2025/26', state: 'sealed' }],
+    });
+    expect(coffeePage(db, 3, 1)?.bags).toEqual([]);
+    const secret = Number(db.prepare("SELECT id FROM coffee WHERE name = 'Secret Sasaba'").get()?.id);
+    expect(coffeePage(db, 2, secret)).toMatchObject({ private: true, harvests: [], rating: null });
+    expect(coffeePage(db, 3, secret)).toBeUndefined();
     db.close();
   });
 });

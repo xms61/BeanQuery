@@ -2,7 +2,7 @@ import type { Child } from 'hono/jsx';
 import { assetVersion } from './assets/style.js';
 
 /** The current section of the app, which the sidebar marks. */
-export type Section = 'library' | 'add' | 'account' | 'admin' | 'impressum';
+export type Section = 'library' | 'pool' | 'add' | 'roasters' | 'gear' | 'account' | 'admin' | 'impressum';
 
 function Document(props: { title: string; children: Child }) {
   return (
@@ -32,8 +32,17 @@ export function AppPage(props: { title: string; section: Section; admin: boolean
           <a class="nav" href="/" aria-current={current('library')}>
             Library
           </a>
+          <a class="nav" href="/pool" aria-current={current('pool')}>
+            Pool
+          </a>
           <a class="nav" href="/add" aria-current={current('add')}>
             Add bag
+          </a>
+          <a class="nav" href="/roasters" aria-current={current('roasters')}>
+            Roasters
+          </a>
+          <a class="nav" href="/gear" aria-current={current('gear')}>
+            Gear
           </a>
           {props.admin && (
             <a class="nav" href="/admin" aria-current={current('admin')}>
