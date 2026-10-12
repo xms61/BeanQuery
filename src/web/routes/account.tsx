@@ -8,6 +8,7 @@ import {
   signOut,
   signOutEverywhere,
 } from '../../account/account.js';
+import { setTheme, type Theme, themeOf } from '../../account/theme.js';
 import { setTimeZone, timeZoneOf } from '../../account/time-zone.js';
 import { exportCsv } from '../../bag/csv.js';
 import { exportBags } from '../../bag/export.js';
@@ -76,6 +77,7 @@ accountRoutes.get('/account', (c) => {
       bags={summary.bags}
       privateBags={summary.privateBags}
       timeZone={timeZoneOf(config.db, accountId, config.defaultTimeZone)}
+      theme={themeOf(config.db, accountId)}
     />,
   );
 });
@@ -84,6 +86,13 @@ accountRoutes.post('/account/time-zone', async (c) => {
   const accountId = requireAccount(c);
   if (accountId instanceof Response) return accountId;
   if (!setTimeZone(c.var.config.db, accountId, await field(c, 'time_zone'))) return c.text('Not a time zone', 400);
+  return c.redirect('/account', 303);
+});
+
+accountRoutes.post('/account/theme', async (c) => {
+  const accountId = requireAccount(c);
+  if (accountId instanceof Response) return accountId;
+  if (!setTheme(c.var.config.db, accountId, await field(c, 'theme'))) return c.text('Not a theme', 400);
   return c.redirect('/account', 303);
 });
 
@@ -249,7 +258,7 @@ function SignInPage(props: { error?: string }) {
   );
 }
 
-function AccountPage(props: { admin: boolean; bags: number; privateBags: number; timeZone: string }) {
+function AccountPage(props: { admin: boolean; bags: number; privateBags: number; timeZone: string; theme: Theme }) {
   const bags =
     props.bags === 0
       ? 'none yet'
@@ -306,6 +315,27 @@ function AccountPage(props: { admin: boolean; bags: number; privateBags: number;
                   {timeZones(props.timeZone).map((zone) => (
                     <option value={zone} selected={zone === props.timeZone}>
                       {zone.replace(/_/g, ' ')}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button class="button secondary" type="submit">
+                Save
+              </button>
+            </form>
+          </section>
+          <section class="card">
+            <h2>Theme</h2>
+            <p class="muted small">
+              System follows your device's light or dark setting. Light and Dark apply on every device you sign in on.
+            </p>
+            <form method="post" action="/account/theme" class="actions">
+              <label class="filter">
+                <span class="visually-hidden">Theme</span>
+                <select name="theme">
+                  {themeChoices.map(([value, label]) => (
+                    <option value={value} selected={value === props.theme}>
+                      {label}
                     </option>
                   ))}
                 </select>
@@ -389,3 +419,9 @@ function timeZones(current: string): string[] {
   const zones = Intl.supportedValuesOf('timeZone');
   return zones.includes(current) ? zones : [current, ...zones];
 }
+
+const themeChoices: [Theme, string][] = [
+  ['system', 'System'],
+  ['light', 'Light'],
+  ['dark', 'Dark'],
+];

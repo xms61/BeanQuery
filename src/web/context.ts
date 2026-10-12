@@ -1,7 +1,9 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import type { DatabaseSync } from 'node:sqlite';
 import { getConnInfo } from '@hono/node-server/conninfo';
 import type { Context } from 'hono';
 import { setCookie } from 'hono/cookie';
+import type { Theme } from '../account/theme.js';
 import { localDate, timeZoneOf } from '../account/time-zone.js';
 import type { RateLimiter } from './rate-limit.js';
 
@@ -69,4 +71,19 @@ export function clientKeyFrom(trustProxy: boolean): (c: Context) => string {
 export function todayFor(c: Context<Env>, accountId: number): string {
   const { config } = c.var;
   return localDate(config.now(), timeZoneOf(config.db, accountId, config.defaultTimeZone));
+}
+
+const requestTheme = new AsyncLocalStorage<Theme>();
+
+/**
+ * Runs the rest of a request with the signed-in account's theme, so every page's `<html>` carries it without each
+ * route passing it down.
+ */
+export function withTheme<T>(theme: Theme, next: () => T): T {
+  return requestTheme.run(theme, next);
+}
+
+/** The theme of the page being rendered: the account's, or `system` when nobody is signed in. */
+export function pageTheme(): Theme {
+  return requestTheme.getStore() ?? 'system';
 }

@@ -271,6 +271,14 @@ const migrations: readonly Migration[] = [
       ALTER TABLE bag ADD COLUMN frozen_on TEXT CHECK (frozen_on IS date(frozen_on));
     `,
   },
+  {
+    id: 7,
+    name: 'account theme',
+    // Light or dark, chosen on the account page; NULL follows the device's preference.
+    sql: `
+      ALTER TABLE account ADD COLUMN theme TEXT CHECK (theme IN ('light', 'dark'));
+    `,
+  },
 ];
 
 /** The id of the newest migration: a database whose schema_migration holds a higher one is from a newer version. */

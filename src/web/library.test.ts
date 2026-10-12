@@ -178,3 +178,31 @@ describe('the time zone', () => {
     expect((await request('/account/time-zone', { form: { time_zone: 'nope' }, cookie: me.cookie })).status).toBe(400);
   });
 });
+
+describe('the theme', () => {
+  test('follows the system until the account picks one, which every page then carries', async () => {
+    const { db, request } = setup();
+    const me = await redeemed(request, db);
+    const them = await redeemed(request, db);
+    const htmlTag = async (path: string, cookie?: string) =>
+      /<html[^>]*>/.exec(await (await request(path, cookie === undefined ? {} : { cookie })).text())?.[0];
+
+    expect(await htmlTag('/', me.cookie)).toBe('<html lang="en">');
+    expect(await (await request('/account', { cookie: me.cookie })).text()).toMatch(
+      /<option value="system" selected="">System<\/option>/,
+    );
+
+    const set = await request('/account/theme', { form: { theme: 'dark' }, cookie: me.cookie });
+    expect([set.status, set.headers.get('location')]).toEqual([303, '/account']);
+    expect(await htmlTag('/', me.cookie)).toBe('<html lang="en" data-theme="dark">');
+    expect(await htmlTag('/no-such-page', me.cookie)).toBe('<html lang="en" data-theme="dark">');
+    expect(await htmlTag('/', them.cookie)).toBe('<html lang="en">');
+    expect(await htmlTag('/sign-in')).toBe('<html lang="en">');
+
+    await request('/account/theme', { form: { theme: 'light' }, cookie: me.cookie });
+    expect(await htmlTag('/account', me.cookie)).toBe('<html lang="en" data-theme="light">');
+    expect((await request('/account/theme', { form: { theme: 'purple' }, cookie: me.cookie })).status).toBe(400);
+    expect((await request('/account/theme', { form: { theme: 'dark' } })).status).toBe(303);
+    expect(await htmlTag('/account', me.cookie)).toBe('<html lang="en" data-theme="light">');
+  });
+});

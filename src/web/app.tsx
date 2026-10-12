@@ -5,12 +5,13 @@ import { csrf } from 'hono/csrf';
 import { HTTPException } from 'hono/http-exception';
 import { secureHeaders } from 'hono/secure-headers';
 import { accountForSession } from '../account/account.js';
+import { themeOf } from '../account/theme.js';
 import { isTimeZone } from '../account/time-zone.js';
 import { isAdmin } from '../admin/admin.js';
 import { pingDatabase } from '../ops/health.js';
 import { fontFiles } from './assets/fonts.js';
 import { appScript, styleSheet } from './assets/style.js';
-import { type Env, type Limits, sessionCookieName, setSessionCookie, type WebConfig } from './context.js';
+import { type Env, type Limits, sessionCookieName, setSessionCookie, type WebConfig, withTheme } from './context.js';
 import { AppPage, CardPage } from './layout.js';
 import { RateLimiter } from './rate-limit.js';
 import { accountRoutes } from './routes/account.js';
@@ -74,7 +75,7 @@ export function createApp(config: WebConfig): Hono<Env> {
     const accountId = token === undefined ? null : accountForSession(config.db, token, config.now());
     c.set('accountId', accountId);
     c.set('admin', accountId !== null && isAdmin(config.db, accountId));
-    await next();
+    await withTheme(accountId === null ? 'system' : themeOf(config.db, accountId), next);
     // Renew the cookie with the session, unless the route set or cleared it (signing in or out, deleting).
     const setsSession = c.res.headers
       .getSetCookie()

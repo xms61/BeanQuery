@@ -173,6 +173,15 @@ describe('sessions', () => {
     }
   });
 
+  test('the stylesheet’s dark tokens follow the system unless the page says light, and always a dark page', async () => {
+    const { request } = setup();
+    const css = await (await request('/assets/app.css')).text();
+    expect(css).toMatch(/:root\[data-theme="dark"\] \{\s+color-scheme: dark;\s+--bg-ground: #1B1613;/);
+    expect(css).toMatch(
+      /@media \(prefers-color-scheme: dark\) \{\s+:root:not\(\[data-theme="light"\]\) \{\s+--bg-ground: #1B1613;/,
+    );
+  });
+
   test('renew the cookie on use, and end after 90 days unused', async () => {
     const { db, clock, request } = setup();
     const { cookie } = await redeemed(request, db);
