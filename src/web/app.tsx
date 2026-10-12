@@ -7,6 +7,7 @@ import { secureHeaders } from 'hono/secure-headers';
 import { accountForSession } from '../account/account.js';
 import { isTimeZone } from '../account/time-zone.js';
 import { isAdmin } from '../admin/admin.js';
+import { pingDatabase } from '../ops/health.js';
 import { fontFiles } from './assets/fonts.js';
 import { appScript, styleSheet } from './assets/style.js';
 import { type Env, type Limits, sessionCookieName, setSessionCookie, type WebConfig } from './context.js';
@@ -64,8 +65,9 @@ export function createApp(config: WebConfig): Hono<Env> {
   const ownLimit = new Set(['/import', '/admin/roasters/upload']);
   app.use((c, next) => (ownLimit.has(c.req.path) ? next() : formLimit(c, next)));
   app.use(async (c, next) => {
-    // The assets are public and cacheable: no session is read or renewed, so no cache can keep a session cookie.
-    if (c.req.path.startsWith('/assets/')) return next();
+    // The assets are public and cacheable: no session is read or renewed, so no cache can keep a session cookie. The
+    // health check needs no session either.
+    if (c.req.path.startsWith('/assets/') || c.req.path === '/healthz') return next();
     c.set('config', config);
     c.set('limits', limits);
     const token = getCookie(c, sessionCookieName(config));
@@ -94,6 +96,16 @@ export function createApp(config: WebConfig): Hono<Env> {
       'Cache-Control': 'public, max-age=31536000, immutable',
     }),
   );
+  app.get('/healthz', (c) => {
+    c.header('Cache-Control', 'no-store');
+    try {
+      pingDatabase(config.db);
+      return c.text('ok');
+    } catch (error) {
+      console.error(error);
+      return c.text('database unavailable', 503);
+    }
+  });
   app.get('/assets/fonts/:file', (c) => {
     const font = fontFiles.get(c.req.param('file'));
     if (font === undefined) return c.notFound();

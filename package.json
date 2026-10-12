@@ -20,6 +20,7 @@
     "roasters:import": "tsc && node dist/roaster/cli.js",
     "contract:schema": "tsc && node dist/contract/write-schema.js",
     "admin": "tsc && node dist/account/cli.js",
+    "ops": "tsc && node dist/ops/cli.js",
     "test": "vitest run",
     "test:scripts": "node --test \"scripts/**/*.test.mjs\"",
     "start": "tsc && node --env-file-if-exists=.env dist/web/server.js"

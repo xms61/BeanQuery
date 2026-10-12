@@ -34,6 +34,7 @@ This file is the map, not the manual: it says which doc to read for which task. 
 | Typecheck | `pnpm typecheck` |
 | Import roasters from every.coffee, or from a saved copy | `pnpm roasters:import --db <file>` (add `--file <saved page>` for a saved copy) |
 | Create the first admin, or an invite, on the server | `pnpm admin create-admin --db <file>` (`--another` when admins exist), `pnpm admin create-invite --db <file>` |
+| Back up, restore, or rebuild the collective ratings on the server | `pnpm ops backup --db <file> --dir <folder>`, `pnpm ops restore --db <file> --from <backup>` (app stopped), `pnpm ops rebuild-ratings --db <file>` |
 | Regenerate the bag JSON Schema after changing the contract | `pnpm contract:schema` |
 | Tests, all and one file | `pnpm test`, `pnpm vitest run src/db.test.ts` |
 

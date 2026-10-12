@@ -16,6 +16,7 @@ const layers: Record<string, 'db' | 'domain' | 'web'> = {
   bag: 'domain',
   coffee: 'domain',
   contract: 'domain',
+  ops: 'domain',
   roaster: 'domain',
   web: 'web',
 };

@@ -53,6 +53,28 @@ describe('signed-out visitors', () => {
   });
 });
 
+describe('the health check', () => {
+  test('answers while the database does, without a session, and fails once it does not', async () => {
+    const { db, request } = setup();
+    const { cookie } = await redeemed(request, db);
+    const healthy = await request('/healthz', { cookie });
+    expect([healthy.status, await healthy.text(), healthy.headers.get('set-cookie')]).toEqual([200, 'ok', null]);
+    expect(healthy.headers.get('cache-control')).toBe('no-store');
+
+    db.close();
+    const errors: unknown[] = [];
+    const original = console.error;
+    console.error = (...args: unknown[]) => errors.push(args);
+    try {
+      const failing = await request('/healthz');
+      expect([failing.status, await failing.text()]).toEqual([503, 'database unavailable']);
+    } finally {
+      console.error = original;
+    }
+    expect(errors).toHaveLength(1);
+  });
+});
+
 describe('redeeming an invite', () => {
   test('creates an account, shows its number once, and signs in with a secure session cookie', async () => {
     const { db, request } = setup();
