@@ -1,9 +1,8 @@
 # The app's image (docs/design-docs/hosting-and-deploy.md). The build and the production dependencies are made on the
 # build platform, since neither depends on the CPU: the dependencies are plain JavaScript and node:sqlite is built in.
-# Dependabot keeps the digest current.
-ARG NODE_IMAGE=node:26-alpine@sha256:143494b1da2945f061539253adc65e4f1569ddf07da2d384c022c791a9d90a4a
+# Dependabot keeps the digest current in both FROM lines, which name the image directly so it can find them.
 
-FROM --platform=$BUILDPLATFORM ${NODE_IMAGE} AS pnpm
+FROM --platform=$BUILDPLATFORM node:26-alpine@sha256:143494b1da2945f061539253adc65e4f1569ddf07da2d384c022c791a9d90a4a AS pnpm
 # The pnpm version pinned in package.json's packageManager field.
 RUN npm install --global --ignore-scripts pnpm@12.10.1
 WORKDIR /app
@@ -18,7 +17,7 @@ COPY tsconfig.json ./
 COPY src src
 RUN pnpm build
 
-FROM ${NODE_IMAGE}
+FROM node:26-alpine@sha256:143494b1da2945f061539253adc65e4f1569ddf07da2d384c022c791a9d90a4a
 # The app needs no package manager, and the ones in the base image carry their own vulnerabilities.
 RUN apk add --no-cache tini \
   && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack /opt/yarn-* \
