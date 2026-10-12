@@ -1,0 +1,181 @@
+{
+  "schema": "beanquery.bags/v1",
+  "reference_date": "2026-10-12",
+  "bags": [
+    {
+      "roaster": { "name": "Nord Kaffe" },
+      "coffee": {
+        "name": "Ethiopia Sasaba",
+        "country": "Ethiopia",
+        "region": "Guji",
+        "farm": null,
+        "producer": "Tsegay Hagos Tesgaye",
+        "varieties": ["Mixed Heirloom"],
+        "process": { "printed": "Natural", "category": "natural" },
+        "altitude": { "printed": null, "min_m": null, "max_m": null },
+        "tasting_notes": ["Pineapple", "Bergamot", "Peach"],
+        "decaf": false
+      },
+      "harvest": null,
+      "lot": null,
+      "roast": { "degree": "light", "assumed": true, "printed": null },
+      "roast_date": { "printed": "18/09/26", "date": "2026-09-18", "status": "verified" },
+      "weight": { "grams": 250, "assumed": false },
+      "plan": {
+        "rest": { "from": 10, "to": 12 },
+        "peak": { "from": 12, "to": 30 },
+        "portion": { "from": 12, "to": 12 },
+        "mid_peak": 21,
+        "tubes": 16,
+        "dial_in_g": 10
+      },
+      "brew": {
+        "water": { "gh": 60, "kh": 20, "ca": 40, "mg": 20, "na": 0, "k": 20, "tds": null },
+        "water_alt": { "gh": 60, "kh": 20, "ca": 20, "mg": 40, "na": 0, "k": 20, "tds": null },
+        "kettle_c": 99,
+        "grinder": "Fellow Ode Gen 2",
+        "grind": "4.2"
+      }
+    },
+    {
+      "roaster": { "name": "Nord Kaffe" },
+      "coffee": {
+        "name": "Peru La Danta",
+        "country": "Peru",
+        "region": "Cajamarca, San Ignacio",
+        "farm": null,
+        "producer": null,
+        "varieties": ["Caturra", "Bourbon", "Catimor", "Pache"],
+        "process": { "printed": "Natural", "category": "natural" },
+        "altitude": { "printed": null, "min_m": null, "max_m": null },
+        "tasting_notes": ["Black berries", "Violet", "Dark chocolate"],
+        "decaf": false
+      },
+      "harvest": null,
+      "lot": null,
+      "roast": { "degree": "light", "assumed": true, "printed": null },
+      "roast_date": { "printed": "19/09/26", "date": "2026-09-19", "status": "verified" },
+      "weight": { "grams": 250, "assumed": false },
+      "plan": {
+        "rest": { "from": 10, "to": 12 },
+        "peak": { "from": 12, "to": 30 },
+        "portion": { "from": 12, "to": 12 },
+        "mid_peak": 21,
+        "tubes": 16,
+        "dial_in_g": 10
+      },
+      "brew": {
+        "water": { "gh": 60, "kh": 20, "ca": 40, "mg": 20, "na": 0, "k": 20, "tds": null },
+        "water_alt": { "gh": 60, "kh": 20, "ca": 20, "mg": 40, "na": 0, "k": 20, "tds": null },
+        "kettle_c": 99,
+        "grinder": "Fellow Ode Gen 2",
+        "grind": "4.2"
+      }
+    },
+    {
+      "roaster": { "name": "TANAT" },
+      "coffee": {
+        "name": "Panama - Elida [Catuai ASD T4D 1304]",
+        "country": "Panama",
+        "region": "Boquete, Chiriquí",
+        "farm": "Elida Estate",
+        "producer": null,
+        "varieties": ["Catuai"],
+        "process": { "printed": "Anaerobic Natural Slow Dry (ASD)", "category": "anaerobic" },
+        "altitude": { "printed": "1600-1700m", "min_m": 1600, "max_m": 1700 },
+        "tasting_notes": ["Blackcurrant liqueur", "Black cherry", "Cacao liqueur"],
+        "decaf": false
+      },
+      "harvest": null,
+      "lot": null,
+      "roast": { "degree": "light", "assumed": true, "printed": "Filter roast" },
+      "roast_date": { "printed": "18.09.2026", "date": "2026-09-18", "status": "verified" },
+      "weight": { "grams": 250, "assumed": true },
+      "plan": {
+        "rest": { "from": 25, "to": 35 },
+        "peak": { "from": 28, "to": 55 },
+        "portion": { "from": 25, "to": 28 },
+        "mid_peak": 42,
+        "tubes": 16,
+        "dial_in_g": 10
+      },
+      "brew": {
+        "water": { "gh": 60, "kh": 35, "ca": 40, "mg": 20, "na": 0, "k": 35, "tds": null },
+        "water_alt": { "gh": 60, "kh": 20, "ca": 40, "mg": 20, "na": 0, "k": 20, "tds": null },
+        "kettle_c": 99,
+        "grinder": "Fellow Ode Gen 2",
+        "grind": "4.2"
+      }
+    },
+    {
+      "roaster": { "name": "TANAT" },
+      "coffee": {
+        "name": "Panama - Audaura [Finca Lorayne GHF DRD]",
+        "country": "Panama",
+        "region": "El Salto, Boquete",
+        "farm": null,
+        "producer": "Marcus Duran",
+        "varieties": ["Geisha"],
+        "process": { "printed": "Honey Anaerobic", "category": "anaerobic" },
+        "altitude": { "printed": "1600-1700m", "min_m": 1600, "max_m": 1700 },
+        "tasting_notes": ["Rivesaltes", "Lychee", "Candied papaya"],
+        "decaf": false
+      },
+      "harvest": null,
+      "lot": null,
+      "roast": { "degree": "light", "assumed": true, "printed": "Filter roast" },
+      "roast_date": { "printed": "28.9.2026", "date": "2026-09-28", "status": "verified" },
+      "weight": { "grams": 100, "assumed": false },
+      "plan": {
+        "rest": { "from": 25, "to": 35 },
+        "peak": { "from": 28, "to": 55 },
+        "portion": { "from": 25, "to": 28 },
+        "mid_peak": 42,
+        "tubes": 6,
+        "dial_in_g": 10
+      },
+      "brew": {
+        "water": { "gh": 60, "kh": 35, "ca": 40, "mg": 20, "na": 0, "k": 35, "tds": null },
+        "water_alt": { "gh": 60, "kh": 20, "ca": 40, "mg": 20, "na": 0, "k": 20, "tds": null },
+        "kettle_c": 99,
+        "grinder": "Fellow Ode Gen 2",
+        "grind": "4.2"
+      }
+    },
+    {
+      "roaster": { "name": "TANAT" },
+      "coffee": {
+        "name": "Ethiopia - Elto [Hamasho 72h]",
+        "country": "Ethiopia",
+        "region": "Arbegona, Sidama",
+        "farm": null,
+        "producer": "Tamiru Tadesse",
+        "varieties": ["74158"],
+        "process": { "printed": "Anaerobic Natural - 72h fermentation", "category": "anaerobic" },
+        "altitude": { "printed": "+2200m", "min_m": null, "max_m": null },
+        "tasting_notes": ["Pineapple", "Kiwi", "Milk chocolate"],
+        "decaf": false
+      },
+      "harvest": null,
+      "lot": null,
+      "roast": { "degree": "light", "assumed": true, "printed": "Filter roast" },
+      "roast_date": { "printed": "29.09.2026", "date": "2026-09-29", "status": "verified" },
+      "weight": { "grams": 250, "assumed": true },
+      "plan": {
+        "rest": { "from": 25, "to": 35 },
+        "peak": { "from": 28, "to": 55 },
+        "portion": { "from": 25, "to": 28 },
+        "mid_peak": 42,
+        "tubes": 16,
+        "dial_in_g": 10
+      },
+      "brew": {
+        "water": { "gh": 60, "kh": 35, "ca": 40, "mg": 20, "na": 0, "k": 35, "tds": null },
+        "water_alt": { "gh": 60, "kh": 20, "ca": 40, "mg": 20, "na": 0, "k": 20, "tds": null },
+        "kettle_c": 99,
+        "grinder": "Fellow Ode Gen 2",
+        "grind": "4.2"
+      }
+    }
+  ]
+}

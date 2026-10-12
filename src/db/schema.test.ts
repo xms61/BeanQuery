@@ -102,6 +102,13 @@ describe('schema', () => {
          mid_peak = 30, tube_count = 10, dial_in_g = 50`,
       ],
       ['bag boolean', 'UPDATE bag SET rebuy = 3'],
+      ['bag alternative water without a main water', 'UPDATE bag SET water_alt_gh = 60, water_alt_kh = 20'],
+      ['bag alternative water without kh', 'UPDATE bag SET water_gh = 60, water_kh = 25, water_alt_gh = 60'],
+      ['bag alternative ions without gh and kh', 'UPDATE bag SET water_gh = 60, water_kh = 25, water_alt_ca = 40'],
+      [
+        'bag negative alternative water',
+        'UPDATE bag SET water_gh = 60, water_kh = 25, water_alt_gh = -1, water_alt_kh = 20',
+      ],
       ['account date', "UPDATE account SET created_on = '12 Oct 2026'"],
       ['account admin flag', 'UPDATE account SET is_admin = 2'],
       ['account key hash length', 'UPDATE account SET key_hash = randomblob(16) WHERE id = 2'],
@@ -120,7 +127,8 @@ describe('schema', () => {
       expect(() =>
         db.exec(`UPDATE bag SET roast_degree = 'light', roast_degree_printed = 'Light roast for filter', roast_date = '2026-09-18', weight_g = 250, rating = 4.5,
           rebuy = 1, kettle_c = 94, water_gh = 50, water_kh = 20, water_ca = 30, water_mg = 20, water_na = 0,
-          water_k = 20, water_tds = 80, price_cents = 1800, currency = 'EUR', bought_on = '2026-09-20',
+          water_k = 20, water_tds = 80, water_alt_gh = 60, water_alt_kh = 20, water_alt_ca = 40, water_alt_mg = 20,
+          water_alt_na = 0, water_alt_k = 20, water_alt_tds = 75, price_cents = 1800, currency = 'EUR', bought_on = '2026-09-20',
           rest_from = 0, rest_to = 7, peak_from = 7, peak_to = 21, portion_from = 7, portion_to = 7, mid_peak = 14,
           tube_count = 10, dial_in_g = 50`),
       ).not.toThrow();

@@ -1,11 +1,11 @@
 ---
 status: draft
-last-verified: 2026-10-07
+last-verified: 2026-10-12
 ---
 
 # Bag JSON contract, `beanquery.bags/v1`
 
-The format BeanQuery imports and exports bags in. A user pastes it from an LLM chat, and the export writes it, so an export imports back into any account. This contract is the source of truth: a prompt that produces the JSON follows it, never the other way round. Nothing here is implemented yet; the [bean tracker plan](../exec-plans/active/2026-10-07-bean-tracker.md) schedules it.
+The format BeanQuery imports and exports bags in. A user pastes it from an LLM chat, and the export writes it, so an export imports back into any account. This contract is the source of truth: a prompt that produces the JSON, such as the [coffee planner prompt](../../prompts/coffee-planner.md), follows it, never the other way round. Validation is implemented in [src/contract/bag-json.ts](../../src/contract/bag-json.ts), the one definition the importer uses. The [JSON Schema](../generated/bag-json-contract.schema.json) is generated from it with the paste limits, by `pnpm contract:schema`; change the definition and this spec together. Saving bags is scheduled in the [bean tracker plan](../exec-plans/active/2026-10-07-bean-tracker.md).
 
 ## Example
 ```json
@@ -55,7 +55,7 @@ The format BeanQuery imports and exports bags in. A user pastes it from an LLM c
 ```
 
 ## Fields
-`null` means unknown or not stated, and `[]` is an empty list. Text printed on the bag is kept verbatim. Required fields must be present; an optional field may be left out.
+`null` means unknown or not stated, and `[]` is an empty list. Text is in English: printed descriptive wording (process, roast wording, tasting notes, country names) is translated, and proper names (roaster, farm, producer, varieties, places, the coffee's own name) are kept as printed. Required fields must be present; an optional field may be left out.
 
 **Top level**
 
@@ -74,19 +74,20 @@ The format BeanQuery imports and exports bags in. A user pastes it from an LLM c
 | `roaster.name` | text | yes | The roaster as printed. Must resolve to a roaster in the registry before the bag is saved |
 | `roaster.slug` | text or null | no | The roaster's every.coffee slug, or the registry's own key for a roaster the admin added. Export writes it, and import resolves the roaster by it before trying the name |
 | `coffee.name` | text | yes | The coffee's name as printed, without the roaster's name |
-| `coffee.country`, `region`, `farm`, `producer` | text or null | yes | As printed |
+| `coffee.country` | text or null | yes | The country, in English |
+| `coffee.region`, `farm`, `producer` | text or null | yes | As printed |
 | `coffee.varieties` | list of text | yes | As printed, in printed order |
-| `coffee.process.printed` | text or null | yes | The exact process wording |
+| `coffee.process.printed` | text or null | yes | The process wording on the bag, in English |
 | `coffee.process.category` | `washed`, `natural`, `honey`, `anaerobic`, `other` or null | yes | The process family; null when no process is stated |
 | `coffee.altitude.printed` | text or null | yes | As printed |
-| `coffee.altitude.min_m`, `max_m` | whole metres or null | yes | Both the same for a single value. `min_m` is at most `max_m` |
-| `coffee.tasting_notes` | list of text | yes | The roaster's notes as printed |
+| `coffee.altitude.min_m`, `max_m` | whole metres from 0, or null | yes | Both set or both null; the same for a single value. `min_m` is at most `max_m` |
+| `coffee.tasting_notes` | list of text | yes | The roaster's notes, in English |
 | `coffee.decaf` | true or false | yes | True only when the bag says decaf |
 | `harvest` | text or null | yes | This bag's harvest as printed, for example `2025/26`. Every harvest of a coffee belongs to the same coffee |
 | `lot` | text or null | yes | This bag's lot, only when labelled as the coffee's lot. Not a batch number beside the roast date |
 | `roast.degree` | `light`, `light-medium`, `medium`, `medium-dark`, `dark` or null | yes | The roast degree |
 | `roast.assumed` | true or false | yes | True when the degree was assumed, not printed |
-| `roast.printed` | text or null | yes | The printed wording |
+| `roast.printed` | text or null | yes | The roast wording on the bag, in English |
 | `roast_date.printed` | text or null | yes | The date as printed |
 | `roast_date.date` | date or null | yes | The roast date, only when it is unambiguous. Null puts the bag in relative mode: day offsets without calendar dates |
 | `roast_date.status` | `verified`, `ambiguous`, `missing`, `unlabelled` or `future` | yes | Why `date` is or isn't set |
@@ -100,9 +101,10 @@ The format BeanQuery imports and exports bags in. A user pastes it from an LLM c
 | `brew.water.gh`, `kh` | numbers from 0 | in a water | General hardness and alkalinity in ppm as CaCO3. These describe any water |
 | `brew.water.ca`, `mg`, `na`, `k` | numbers from 0, or null | no | The ions in ppm as CaCO3, when known. They are not checked to add up to GH and KH |
 | `brew.water.tds` | number from 0, or null | no | Total dissolved solids in ppm |
+| `brew.water_alt` | object or null | no | An alternative water, shaped like `brew.water`. Only with a `brew.water` |
 | `brew.kettle_c` | whole number from 70 to 100, or null | yes | Kettle temperature in °C |
 | `brew.grinder` | text or null | yes | Matched by name to one of the user's grinders, or added as a new one |
-| `brew.grind` | text or null | yes | The one grind setting for this bag, in the grinder's own notation, for example `"4.1"`. This is the only grind setting the app stores |
+| `brew.grind` | text or null | yes | The one grind setting for this bag, for fresh beans, in the grinder's own notation, for example `"4.1"`. This is the only grind setting the app stores |
 | `personal` | object | no | The user's own fields. An LLM leaves it out; export fills it |
 | `personal.private` | true or false | no, default false | True keeps the bean out of the pool entirely |
 | `personal.state` | `sealed`, `open`, `frozen` or `finished` | no, default `sealed` | Set by hand; the app never changes it |
