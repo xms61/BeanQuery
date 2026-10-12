@@ -12,7 +12,9 @@ describe('migrate', () => {
     migrate(db);
 
     const tables = db.prepare("SELECT name FROM sqlite_schema WHERE type = 'table' ORDER BY name").all();
-    expect(tables.map((row) => row.name)).toEqual(['roaster', 'roaster_alias', 'schema_migration']);
+    expect(tables.map((row) => row.name)).toEqual(
+      expect.arrayContaining(['roaster', 'roaster_alias', 'schema_migration']),
+    );
     db.close();
   });
 

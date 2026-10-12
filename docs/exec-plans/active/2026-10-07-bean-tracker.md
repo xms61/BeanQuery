@@ -205,7 +205,7 @@ Personal:
 
 The columns of `bag`:
 - **Who and what:** `account_id`, `coffee_id`, `harvest`, `lot`.
-- **Roast:** `roast_degree`, `roast_degree_assumed`, `roast_date`, `roast_date_printed`, `roast_date_status` (`verified`, `ambiguous`, `missing`, `unlabelled` or `future`).
+- **Roast:** `roast_degree`, `roast_degree_printed`, `roast_degree_assumed`, `roast_date`, `roast_date_printed`, `roast_date_status` (`verified`, `ambiguous`, `missing`, `unlabelled` or `future`).
 - **Weight:** `weight_g`, `weight_assumed`.
 - **Purchase:** `price_cents`, `currency`, `bought_on`, `shop`, `state` (`sealed`, `open`, `frozen` or `finished`, set by hand).
 - **Plan, as day offsets:** `rest_from`, `rest_to`, `peak_from`, `peak_to`, `portion_from`, `portion_to`, `mid_peak`, then `tube_count` and `dial_in_g`.
@@ -261,7 +261,7 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - [ ] Design in Figma, reviewed by the owner. Done 2026-10-07: tokens, text styles, components, and the Library, Bag detail and Add bag screens with the unregistered-roaster state, in light and dark. The owner ran the dark theme and the Add bag fixes through the Scripter plugin. Still to do: edit bag, the pool, roasters, account flows, admin, toasts and the Impressum
 - [ ] Contract: spec written 2026-10-07; JSON Schema, fixtures and the revised prompt still to do
 - [ ] Design docs written (accounts, web framework). The open questions were answered 2026-10-07
-- [ ] Database schema and migrations. The runner and the roaster tables (`roaster`, `roaster_alias`) exist in `src/db/migrate.ts`, ahead of the rest, because step 5 needs them; the other tables are still to do
+- [x] 2026-10-12 Database schema and migrations: every table of the draft data model, in `src/db/migrate.ts`, tested in `src/db/schema.test.ts`
 - [x] 2026-10-12 Roaster registry imported from every.coffee (`src/roaster/`, `pnpm roasters:import`). The live run loaded 9,152 roasters. Still to do: the owner tries a page saved from Firefox and from Chrome (see Surprises). In later steps: the upload and add-roaster screens (step 8) and the weekly job on the server (step 10)
 - [ ] Bags, import and export in the domain layer
 - [ ] Pool, matching and collective rating
@@ -316,6 +316,16 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - 2026-10-12: Roasters the admin adds get the slug `admin:<name key with hyphens>`, plus `-2`, `-3` on a clash. every.coffee slugs never contain a colon, so the import can't overwrite one. Two roasters may share a name, as 49 names do on every.coffee, so the admin is not stopped from adding a name that already exists.
 - 2026-10-12: When the page links a slug under a second spelling ("Sey Coffee" for `sey`), the first link, from the A to Z list, gives the name and the other spelling becomes a `roaster_alias` row. This stays within names and slugs.
 - 2026-10-12: Until the web layer exists, a saved copy is uploaded with `pnpm roasters:import --db <file> --file <saved page>`, which runs the same parser and import as the fetch. The command compiles with `tsc` into `dist/` first, because Node's type stripping doesn't map the `.js` import specifiers to `.ts` files.
+- 2026-10-12: The schema enforces what it can on its own:
+  - enums and ranges as `CHECK` constraints (a rating in half steps, a whole plan or none, GH with KH, a price with its currency);
+  - dates as `YYYY-MM-DD` that survive `date()`, and SHA-256 hashes as 32-byte blobs;
+  - one pool coffee per roaster and `name_key`, and one private coffee per account, roaster and `name_key`, as partial unique indexes;
+  - account boundaries as triggers: a bag can't point at another account's private coffee, and a coffee can't become private to one account while another account's bag uses it.
+
+  Text lengths and the contract's list limits are left to the domain layer, which has to report them by field path anyway.
+- 2026-10-12: `bag` references `grinder` through `(account_id, grinder_id)`, so deleting a grinder that bags use is refused. The domain clears `grinder_id` first. Rejected: `ON DELETE SET NULL`, which would null `account_id` too.
+- 2026-10-12: The review of step 4 found the draft had no column for the contract's `roast.printed`, so an export would have lost it. `bag.roast_degree_printed` holds it, and the draft above now lists it.
+- 2026-10-12: Columns the draft didn't list stay out until a step needs them. For example, the collective rating's "latest rated bag" needs a rating date, which step 7 adds in its own migration.
 
 ## Surprises
 - 2026-10-07: every.coffee answered the agent's fetch tool with 403, but a plain `curl` with an honest user agent ("BeanQuery roaster sync (weekly, non-commercial)") got 200. The page was 7.6 MB, with 9,149 roaster slugs and 9,101 distinct names; 49 names have several slugs. Its product pages carry structured origin, variety and tasting notes.
