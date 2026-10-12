@@ -159,7 +159,9 @@ Done when a user can, on the deployed desktop web app:
    3. Adding bags, in two pull requests:
       - 3a: pasting with a review step, the roaster and coffee questions, "Use mine", importing an export, deleting a bag, and making a bean private or publishing it.
       - 3b: entering a bag by hand, starting from the pool, editing a bag and its coffee's facts (with the rename collision), re-pasting onto a bag, and the rating and notes.
-   4. The pool and pool coffees, the roasters, the gear, and the admin screens.
+   4. The pool, the roasters, the gear and the admin, in two pull requests:
+      - 4a: the pool with its filters, a coffee's page, the roasters with each account's private note, and the gear.
+      - 4b: the admin screens: invites, accounts, roasters and aliases, and pool coffees with their edit log.
    5. The end-to-end test, the CSV export, and the fonts.
 10. **Deploy to Hetzner**, in its own exec plan: HTTPS, logs without IP addresses, nightly backups of the SQLite file with a tested restore, and the nightly collective-rating rebuild and weekly roaster import as jobs.
 11. **Docs.** Update AGENTS.md, README.md, ARCHITECTURE.md and [storage-choice.md](../../design-docs/storage-choice.md) from "the owner's coffees" to an invite-only multi-user app with a shared pool, plus SECURITY.md for untrusted input, account secrets and admin access. Verify: none of those docs still describes a single owner's database, their `last-verified` dates are updated, and `pnpm check:docs` passes.
@@ -241,7 +243,7 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - [x] 2026-10-12 Bags, import and export in the domain layer: import, export and re-paste (`src/bag/`), manual entry, edits, state and delete, the toasts, and editing coffee facts with the rename rule and "Use mine" (`src/coffee/edit.ts`)
 - [x] 2026-10-12 Pool, matching and collective rating: close-match questions, pool search, the collective-rating rebuild (`src/coffee/match.ts`, `search.ts`, `rating.ts`), and making a bean private or public later, from the bag page or by re-pasting `personal.private` (`src/coffee/privacy.ts`)
 - [x] 2026-10-12 Accounts by invitation, and admin: account numbers, invites, sessions, deleting an account, and the bootstrap command `pnpm admin` (`src/account/`); the admin tools for invites, accounts, roasters and aliases, and pool coffees with edit, merge, delete and undo (`src/admin/`). Their screens come with the web layer (step 9)
-- [ ] Web layer and screens. Done 2026-10-12: part 1, the server, layer rule, sessions and account flows (`src/web/`, `src/layers.test.ts`); part 2, the library with filters, "Coming up" and toasts, the bag page, setting a bag's state, and each account's time zone (`src/bag/library.ts`, `src/account/time-zone.ts`, `src/web/routes/library.tsx`); part 3a, pasting with review and questions, "Use mine", import, delete, private and publish (`src/web/routes/add.tsx`, `src/web/routes/bag-actions.tsx`); part 3b, entering a bag by hand or from the pool, editing a bag with its coffee facts and the rename collision, pasting onto a bag, and the rating and notes (`src/web/bag-form.tsx`, `src/web/routes/edit.tsx`). Still to do: parts 4 and 5
+- [ ] Web layer and screens. Done 2026-10-12: part 1, the server, layer rule, sessions and account flows (`src/web/`, `src/layers.test.ts`); part 2, the library with filters, "Coming up" and toasts, the bag page, setting a bag's state, and each account's time zone (`src/bag/library.ts`, `src/account/time-zone.ts`, `src/web/routes/library.tsx`); part 3a, pasting with review and questions, "Use mine", import, delete, private and publish (`src/web/routes/add.tsx`, `src/web/routes/bag-actions.tsx`); part 3b, entering a bag by hand or from the pool, editing a bag with its coffee facts and the rename collision, pasting onto a bag, and the rating and notes (`src/web/bag-form.tsx`, `src/web/routes/edit.tsx`); part 4a, the pool, a coffee's page, roasters with notes, and gear (`src/coffee/search.ts`, `src/roaster/notes.ts`, `src/bag/gear.ts`, `src/web/routes/pool.tsx`). Still to do: part 4b, then part 5
 - [ ] Deployed (separate exec plan)
 - [ ] Project docs updated for multi-user
 
@@ -349,6 +351,9 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - 2026-10-12: The edit form saves the bag's fields and its coffee's facts in one transaction (`saveBagEdit`). A rename onto another coffee of the roaster saves nothing and offers "Move my bag" as a button of the same form, which saves the bag's fields, moves the bag and drops the typed facts. The form's first button is a hidden Save, so Enter never moves a bag.
 - 2026-10-12: Starting from the pool fills the hand-entry form from the coffee, the account's own private coffees included; saving then matches by name as any new bag does. A roast date typed in by hand is `verified`; without one, an edited bag keeps the reason the LLM recorded.
 - 2026-10-12: The rating, "would buy again" and the note are saved from the bag page through `rateBag`, which keeps every other field.
+
+- 2026-10-12: The gear page lists the grinders bags and imports created, and lets the user rename one, set its note, or delete one no bag uses. Figma had no gear screen, so it follows the roaster page's form. Rejected: adding grinders by hand, since a bag names its grinder anyway.
+- 2026-10-12: A pool coffee's "Edit facts" opens the edit page of the viewer's newest bag on it, so the rename collision and its move work as they do from the bag. Without a bag on it, the page says to start one.
 
 ## Surprises
 - 2026-10-12: pnpm 12 checks `node_modules` against the lockfile before running a script and installs to match. Running `pnpm verify` on a branch without Hono removed Hono from `node_modules`, and later commands hung waiting on the install. After switching branches, run `pnpm install` first.

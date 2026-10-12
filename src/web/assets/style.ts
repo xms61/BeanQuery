@@ -229,6 +229,10 @@ input[type='date'], label.field textarea {
 .bag-tools { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .bag-tools .actions { margin: 0; }
 .verdict .form-grid { grid-template-columns: 1fr 1fr; }
+.split { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 24px; align-items: start; }
+@media (max-width: 900px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.figure { font-size: 32px; line-height: 40px; letter-spacing: -1px; margin-right: 8px; }
+textarea.note-input { width: 100%; font: 15px/22px var(--font-text); color: var(--ink-default); background: var(--bg-surface); border: 1px solid var(--line-strong); border-radius: 8px; padding: 9px 12px; }
 
 @media print {
   .side, footer, .actions, .no-print { display: none; }
