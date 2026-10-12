@@ -155,7 +155,7 @@ Done when a user can, on the deployed desktop web app:
 
    Built in five pull requests, each verified on its own:
    1. The server, the layer rule, sessions, CSRF and security headers, the rate limits, and the account flows (redeem, the account number, sign in and out, the account page with JSON export, delete) and the Impressum.
-   2. The library with its filters and "Coming up", the bag detail with phase and plan dates in the user's time zone, and the toasts.
+   2. The library with its filters and "Coming up", the bag detail with phase and plan dates in the user's time zone, the toasts, and setting a bag's state (the toast's "Done: frozen" needs it).
    3. Adding bags (paste with review, roaster and coffee questions, manual entry, start from the pool), editing, re-paste with "Use mine", state and delete, and importing an export.
    4. The pool and pool coffees, the roasters, the gear, and the admin screens.
    5. The end-to-end test, the CSV export, and the fonts.
@@ -203,7 +203,7 @@ Personal:
 
 | Table | Holds | Key columns |
 | :-- | :-- | :-- |
-| `account` | One anonymous user | `id`, `key_hash` (SHA-256 of the account secret; unique), `is_admin` (set only by the server command), `created_on` and `last_seen_on` (dates, no time) |
+| `account` | One anonymous user | `id`, `key_hash` (SHA-256 of the account secret; unique), `is_admin` (set only by the server command), `created_on` and `last_seen_on` (dates, no time), `time_zone` (an IANA name the browser reports at sign-in, or null) |
 | `invite` | An unused invite code from the admin | `code_hash` (SHA-256; unique), `expires_on`. Deleted when redeemed; no column links it to the account it creates. The admin sees only how many are open |
 | `session` | Sign-ins | `token_hash`, `account_id`, `expires_at` |
 | `roaster_note` | What a user adds to a roaster | `account_id`, `roaster_id`, `note`. Primary key on the pair |
@@ -239,7 +239,7 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - [x] 2026-10-12 Bags, import and export in the domain layer: import, export and re-paste (`src/bag/`), manual entry, edits, state and delete, the toasts, and editing coffee facts with the rename rule and "Use mine" (`src/coffee/edit.ts`)
 - [x] 2026-10-12 Pool, matching and collective rating: close-match questions, pool search, the collective-rating rebuild (`src/coffee/match.ts`, `search.ts`, `rating.ts`), and making a bean private or public later, from the bag page or by re-pasting `personal.private` (`src/coffee/privacy.ts`)
 - [x] 2026-10-12 Accounts by invitation, and admin: account numbers, invites, sessions, deleting an account, and the bootstrap command `pnpm admin` (`src/account/`); the admin tools for invites, accounts, roasters and aliases, and pool coffees with edit, merge, delete and undo (`src/admin/`). Their screens come with the web layer (step 9)
-- [ ] Web layer and screens. Done 2026-10-12: part 1, the server, layer rule, sessions and account flows (`src/web/`, `src/layers.test.ts`). Still to do: parts 2 to 5
+- [ ] Web layer and screens. Done 2026-10-12: part 1, the server, layer rule, sessions and account flows (`src/web/`, `src/layers.test.ts`); part 2, the library with filters, "Coming up" and toasts, the bag page, setting a bag's state, and each account's time zone (`src/bag/library.ts`, `src/account/time-zone.ts`, `src/web/routes/library.tsx`). Still to do: parts 3 to 5
 - [ ] Deployed (separate exec plan)
 - [ ] Project docs updated for multi-user
 
@@ -333,6 +333,10 @@ None right now. All were answered on 2026-10-07; see the Decision log.
 - 2026-10-12: The redeem page shows the account number in the POST response itself, never through a redirect, so the number is in no URL, history entry or cache. The session starts in the same response.
 - 2026-10-12: Rate limits key on the client address in memory only, and read `X-Forwarded-For` only when `TRUST_PROXY` is set, since behind a proxy on the same host every request comes from localhost.
 - 2026-10-12: The web layer runs no SQL itself (checked by `src/layers.test.ts`); the account page's counts come from `accountSummary` in `src/account/`.
+
+- 2026-10-12: Each account stores its time zone, reported by the browser in a hidden field when signing in or redeeming, and changeable on the account page. A cookie would have been simpler but would break the Impressum's promise of no cookie besides the session's. Without one, the server's `DEFAULT_TIME_ZONE` applies.
+- 2026-10-12: A bag's phase on a day: `resting` before the rest window opens, `rested` from then until the peak, `peak` inside the peak window, `past` after it; `no_roast_date` and `no_plan` otherwise. The rest window is when the coffee is rested enough to drink, so it may overlap the peak.
+- 2026-10-12: Toasts show on the library, the page the app opens to. The library's "Coming up" card also lists today's due events first, as "Today", so it reads as one agenda; this replaces the earlier entry's "not today itself" for the page, while `reminders` still returns them apart. Neither follows the library filters.
 
 ## Surprises
 - 2026-10-12: pnpm 12 checks `node_modules` against the lockfile before running a script and installs to match. Running `pnpm verify` on a branch without Hono removed Hono from `node_modules`, and later commands hung waiting on the install. After switching branches, run `pnpm install` first.

@@ -2,6 +2,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { getConnInfo } from '@hono/node-server/conninfo';
 import type { Context } from 'hono';
 import { setCookie } from 'hono/cookie';
+import { localDate, timeZoneOf } from '../account/time-zone.js';
 import type { RateLimiter } from './rate-limit.js';
 
 export interface WebConfig {
@@ -11,6 +12,8 @@ export interface WebConfig {
   secureCookies: boolean;
   /** Who is asking, for the rate limits: the client address, kept in memory only. */
   clientKey: (c: Context) => string;
+  /** The time zone for accounts whose browser hasn't reported one yet, such as `Europe/Berlin`. */
+  defaultTimeZone: string;
   /** The public origin forms must come from, such as `https://beans.example`. Defaults to the request's own. */
   origin?: string;
 }
@@ -60,4 +63,10 @@ export function clientKeyFrom(trustProxy: boolean): (c: Context) => string {
     const forwarded = trustProxy ? c.req.header('x-forwarded-for')?.split(',').at(-1)?.trim() : undefined;
     return forwarded || getConnInfo(c).remote.address || 'unknown';
   };
+}
+
+/** Today's date in the account's time zone, as YYYY-MM-DD: the day phases, plan dates and reminders go by. */
+export function todayFor(c: Context<Env>, accountId: number): string {
+  const { config } = c.var;
+  return localDate(config.now(), timeZoneOf(config.db, accountId, config.defaultTimeZone));
 }

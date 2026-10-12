@@ -1,24 +1,9 @@
 import { Hono } from 'hono';
-import { accountSummary } from '../../account/account.js';
-import { type Env, requireAccount } from '../context.js';
+import type { Env } from '../context.js';
 import { AppPage, CardPage } from '../layout.js';
 
-/** The library, until its own change builds it out, and the Impressum. */
+/** The Impressum. */
 export const pageRoutes = new Hono<Env>();
-
-pageRoutes.get('/', (c) => {
-  const accountId = requireAccount(c);
-  if (accountId instanceof Response) return accountId;
-  const { bags } = accountSummary(c.var.config.db, accountId);
-  return c.html(
-    <AppPage title="Library" section="library" admin={c.var.admin}>
-      <div class="page-head">
-        <h1>Library</h1>
-        <span class="muted">{bags === 1 ? '1 bag' : `${bags} bags`}</span>
-      </div>
-    </AppPage>,
-  );
-});
 
 pageRoutes.get('/impressum', (c) => {
   const content = <Impressum />;

@@ -1,59 +1,8 @@
-import { readFileSync } from 'node:fs';
-import type { DatabaseSync } from 'node:sqlite';
 import { describe, expect, test } from 'vitest';
 import { createInvite, redeemInvite } from '../account/account.js';
 import { createAdmin } from '../account/bootstrap.js';
 import { addBag } from '../bag/manage.js';
-import { migrate } from '../db/migrate.js';
-import { openDatabase } from '../db.js';
-import { importRoasters } from '../roaster/import.js';
-import { createApp } from './app.js';
-
-const fixture = JSON.parse(
-  readFileSync(new URL('../contract/fixtures/owner-bags-2026-10-12.json', import.meta.url), 'utf8'),
-);
-const numberPattern = /[0-9A-Z]{4}( [0-9A-Z]{4}){4}/;
-
-function setup(options: { secureCookies?: boolean } = {}) {
-  const db: DatabaseSync = openDatabase(':memory:');
-  migrate(db);
-  importRoasters(db, [{ slug: 'nord-kaffe', name: 'Nord Kaffe', otherNames: [] }]);
-  const clock = { now: new Date('2026-10-12T12:00:00Z') };
-  const app = createApp({
-    db,
-    now: () => clock.now,
-    secureCookies: options.secureCookies ?? true,
-    clientKey: (c) => c.req.header('x-test-client') ?? 'client-a',
-  });
-  const request = (
-    path: string,
-    init: { form?: Record<string, string>; cookie?: string; headers?: Record<string, string> } = {},
-  ) =>
-    app.request(path, {
-      method: init.form === undefined ? 'GET' : 'POST',
-      ...(init.form === undefined ? {} : { body: new URLSearchParams(init.form) }),
-      headers: {
-        Origin: 'http://localhost',
-        ...(init.form === undefined ? {} : { 'Content-Type': 'application/x-www-form-urlencoded' }),
-        ...(init.cookie === undefined ? {} : { Cookie: init.cookie }),
-        ...init.headers,
-      },
-    });
-  return { app, db, clock, request };
-}
-
-/** The `name=value` pair of the session cookie a response sets, or undefined. */
-function sessionCookie(response: Response): string | undefined {
-  return /((?:__Host-)?session=[^;]+)/.exec(response.headers.get('set-cookie') ?? '')?.[1];
-}
-
-/** A new account through the redeem page: its number and session cookie. */
-async function redeemed(request: ReturnType<typeof setup>['request'], db: DatabaseSync) {
-  const { code } = createInvite(db, new Date('2026-10-12T12:00:00Z'));
-  const response = await request('/redeem', { form: { code } });
-  const number = numberPattern.exec(await response.text())?.[0] as string;
-  return { number, cookie: sessionCookie(response) as string };
-}
+import { fixture, numberPattern, redeemed, sessionCookie, setup } from './test-support.js';
 
 describe('signed-out visitors', () => {
   test('are sent to sign in from every page of the app, and see only the account pages and the Impressum', async () => {
@@ -282,5 +231,11 @@ describe('limits and failures', () => {
       console.error = original;
     }
     expect(errors).toHaveLength(1);
+  });
+});
+
+describe('the app’s settings', () => {
+  test('refuse a default time zone that is not one, before any page can fail on it', () => {
+    expect(() => setup({ defaultTimeZone: 'Europe/Berlín' })).toThrow(/DEFAULT_TIME_ZONE/);
   });
 });

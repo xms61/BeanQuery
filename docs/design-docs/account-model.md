@@ -41,6 +41,8 @@ Passkeys come later. The tables are `account`, `invite` and `session` in [src/db
   - merge two pool coffees of the same roaster: the bags and harvests move to the one kept, whose facts stay as they are;
   - delete a pool coffee: each account's bags move to its own private coffee of that name, or to a private copy, as when a user makes the bean private. No bag is lost.
 
+**Time zone:** each account keeps the IANA time zone its browser reports when signing in, so phases, plan dates and reminders change at the user's midnight. The account page can change it. It is stored on the account, not in a cookie.
+
 **Export** writes the user's bags as JSON in the [bag JSON contract](../product-specs/bag-json-contract.md), with each bag's `personal` block, and as CSV. The JSON imports back into any account.
 
 **Deleting an account** removes every row it owns. Its edits to pool coffees stay, with the account removed, and its ratings leave the collective rating at the next rebuild.

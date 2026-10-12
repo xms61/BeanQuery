@@ -8,6 +8,7 @@ import {
   signOut,
   signOutEverywhere,
 } from '../../account/account.js';
+import { setTimeZone, timeZoneOf } from '../../account/time-zone.js';
 import { exportBags } from '../../bag/export.js';
 import { type Env, requireAccount, SESSION_DAYS, sessionCookieName, setSessionCookie } from '../context.js';
 import { AppPage, CardPage } from '../layout.js';
@@ -30,6 +31,7 @@ accountRoutes.post('/redeem', async (c) => {
   }
   const session = signIn(config.db, redeemed.accountNumber, config.now());
   if (session.status !== 'signed_in') throw new Error('A new account could not sign in');
+  rememberTimeZone(config.db, session.accountId, await field(c, 'time_zone'));
   setSessionCookie(c, session.token);
   // Shown in this response only, never redirected to, so the number is in no URL, history entry or cache.
   return c.html(<AccountNumberPage accountNumber={redeemed.accountNumber} />);
@@ -49,6 +51,7 @@ accountRoutes.post('/sign-in', async (c) => {
   if (session.status !== 'signed_in') {
     return c.html(<SignInPage error="No account has that number. Check it and try again." />, 400);
   }
+  rememberTimeZone(config.db, session.accountId, await field(c, 'time_zone'));
   setSessionCookie(c, session.token);
   return c.redirect('/', 303);
 });
@@ -64,8 +67,23 @@ accountRoutes.post('/sign-out', (c) => {
 accountRoutes.get('/account', (c) => {
   const accountId = requireAccount(c);
   if (accountId instanceof Response) return accountId;
-  const summary = accountSummary(c.var.config.db, accountId);
-  return c.html(<AccountPage admin={c.var.admin} bags={summary.bags} privateBags={summary.privateBags} />);
+  const { config } = c.var;
+  const summary = accountSummary(config.db, accountId);
+  return c.html(
+    <AccountPage
+      admin={c.var.admin}
+      bags={summary.bags}
+      privateBags={summary.privateBags}
+      timeZone={timeZoneOf(config.db, accountId, config.defaultTimeZone)}
+    />,
+  );
+});
+
+accountRoutes.post('/account/time-zone', async (c) => {
+  const accountId = requireAccount(c);
+  if (accountId instanceof Response) return accountId;
+  if (!setTimeZone(c.var.config.db, accountId, await field(c, 'time_zone'))) return c.text('Not a time zone', 400);
+  return c.redirect('/account', 303);
 });
 
 accountRoutes.get('/account/export.json', (c) => {
@@ -109,6 +127,11 @@ accountRoutes.post('/account/delete', async (c) => {
   );
 });
 
+/** Keeps the time zone the browser reported, if it is one; the account page can change it later. */
+function rememberTimeZone(db: Env['Variables']['config']['db'], accountId: number, timeZone: string): void {
+  if (timeZone !== '') setTimeZone(db, accountId, timeZone);
+}
+
 /** One text field of a posted form, or an empty string. */
 async function field(c: Context<Env>, name: string): Promise<string> {
   const value = (await c.req.parseBody())[name];
@@ -135,6 +158,7 @@ function RedeemPage(props: { code?: string; error?: string }) {
           Invite code
           <input name="code" value={props.code ?? ''} autocomplete="off" spellcheck={false} required />
         </label>
+        <input type="hidden" name="time_zone" data-time-zone />
         {props.error && <p class="error">{props.error}</p>}
         <p class="muted small">
           You get an account number, nothing else: no name, email or password. The friend who invited you never sees it.
@@ -196,6 +220,7 @@ function SignInPage(props: { error?: string }) {
           Account number
           <input name="account_number" autocomplete="off" spellcheck={false} required />
         </label>
+        <input type="hidden" name="time_zone" data-time-zone />
         {props.error && <p class="error">{props.error}</p>}
         <p class="muted small">
           Spaces, dashes and case don't matter. You stay signed in for {SESSION_DAYS} days on this browser.
@@ -212,7 +237,7 @@ function SignInPage(props: { error?: string }) {
   );
 }
 
-function AccountPage(props: { admin: boolean; bags: number; privateBags: number }) {
+function AccountPage(props: { admin: boolean; bags: number; privateBags: number; timeZone: string }) {
   const bags =
     props.bags === 0
       ? 'none yet'
@@ -244,6 +269,27 @@ function AccountPage(props: { admin: boolean; bags: number; privateBags: number 
                 </tr>
               </tbody>
             </table>
+          </section>
+          <section class="card">
+            <h2>Time zone</h2>
+            <p class="muted small">
+              Plan dates, phases and reminders change at midnight here. Your browser sets it when you sign in.
+            </p>
+            <form method="post" action="/account/time-zone" class="actions">
+              <label class="filter">
+                <span class="visually-hidden">Time zone</span>
+                <select name="time_zone">
+                  {timeZones(props.timeZone).map((zone) => (
+                    <option value={zone} selected={zone === props.timeZone}>
+                      {zone.replace(/_/g, ' ')}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <button class="button secondary" type="submit">
+                Save
+              </button>
+            </form>
           </section>
           <section class="card">
             <h2>Signed in</h2>
@@ -312,4 +358,10 @@ function DeletePage(props: { error?: string }) {
       </form>
     </CardPage>
   );
+}
+
+/** Every IANA time zone the runtime knows, with the current one first if the list lacks it (such as UTC). */
+function timeZones(current: string): string[] {
+  const zones = Intl.supportedValuesOf('timeZone');
+  return zones.includes(current) ? zones : [current, ...zones];
 }
