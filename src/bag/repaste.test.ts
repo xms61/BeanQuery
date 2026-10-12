@@ -120,20 +120,14 @@ describe('repasteBag', () => {
     db.close();
   });
 
-  test('takes one bag at a time, and leaves making a bean private or public to its own step', () => {
+  // Re-pasting personal.private to make a bean private or public is tested with the moves, in coffee/privacy.test.ts.
+  test('takes one bag at a time', () => {
     const db = seeded();
     expect(
       repasteBag(db, 2, 6, JSON.stringify({ schema: 'beanquery.bags/v1', bags: [sasabaBag(), sasabaBag()] })),
     ).toEqual({
       status: 'invalid',
       errors: [{ path: 'bags', message: expect.stringMatching(/one bag/) }],
-    });
-
-    const toPrivate = sasabaBag();
-    toPrivate.personal = { private: true };
-    expect(repasteBag(db, 2, 6, one(toPrivate))).toEqual({
-      status: 'invalid',
-      errors: [{ path: 'bags[0].personal.private', message: expect.stringMatching(/private/) }],
     });
     db.close();
   });

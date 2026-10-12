@@ -217,7 +217,7 @@ function checkAccess(
 }
 
 /** A coffee's facts in the contract's shape. Not scoped to an account: callers check access first. */
-function readCoffee(db: DatabaseSync, coffeeId: number): CoffeeFacts | undefined {
+export function readCoffee(db: DatabaseSync, coffeeId: number): CoffeeFacts | undefined {
   const row = db.prepare('SELECT * FROM coffee WHERE id = ?').get(coffeeId);
   if (row === undefined) return undefined;
   const textOf = (value: unknown) => (value === null ? null : String(value));
