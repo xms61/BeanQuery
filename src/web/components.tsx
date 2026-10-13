@@ -1,3 +1,4 @@
+import type { Child } from 'hono/jsx';
 import type { Phase, Plan } from '../bag/library.js';
 import { phaseLabels } from './format.js';
 
@@ -128,4 +129,12 @@ export function AddTabs(props: { current: 'paste' | 'manual' | 'pool' }) {
       ))}
     </nav>
   );
+}
+
+/**
+ * Part of a page that a live filter or search replaces: the app's script fetches the page with the form's new query
+ * and swaps each region for the one of the same name, leaving the form, and the focus in it, alone.
+ */
+export function LiveRegion(props: { name: 'results' | 'tabs'; children: Child }) {
+  return <div data-live-region={props.name}>{props.children}</div>;
 }

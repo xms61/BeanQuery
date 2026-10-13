@@ -28,7 +28,7 @@ The owner's first round of feedback from the live app: the bag page's buttons re
 - [x] 2026-10-12 Buttons and delete: secondary buttons for privacy, and `GET /bags/:id/delete`, a confirmation page naming the bag
 - [x] 2026-10-12 Freeze date: `personal.frozen_on` in the contract and migration 6, filled by `setBagState` with the account's date, in the edit form, on the bag page, in the JSON export and the CSV
 - [x] 2026-10-13 Theme switch: `account.theme` in migration 7, set on the account page, carried as `data-theme` on every page's `<html>` for the signed-in account
-- [ ] Live filters and search
+- [x] 2026-10-13 Live filters and search: `data-live` forms on the library, pool, roasters, add-from-pool and admin coffee lists swap their `LiveRegion`s (results, and the roasters' tabs); `data-auto-submit` saves the theme as the select changes. Checked in the browser: selects, typing, focus, the address, the theme both ways
 - [ ] Statistics page
 
 ## Decision log
@@ -37,10 +37,12 @@ The owner's first round of feedback from the live app: the bag page's buttons re
 - 2026-10-12: The statistics page, by the owner's choices: origins, beans, and roasters and spending (not ratings over time); only the account's own bags; a world map served by the app, with the owner's go-ahead to download Natural Earth's country shapes; and Chart.js 4.5.1 as a new dependency, with the owner's go-ahead, for hover tooltips. Rejected: a ranked list instead of a map, SVG charts without a library, Apache ECharts (five times the size) and uPlot (built for time series).
 - 2026-10-12: The freeze date fills only where a bag is marked frozen on its own: the state picker on the bag page and the toast's "Done: frozen", with the account's date. The edit form and a paste save the date as given, blank included, since there a blank is the user's answer. A date stays when the bag leaves the frozen state.
 - 2026-10-12: The phone layout is not a priority for the owner; the deploy's phone check is dropped.
+- 2026-10-13: Of the selects that save one choice, only the theme saves as it changes. On Windows an arrow key on a closed select fires `change`, so a bag's state would be posted while stepping past Frozen, leaving a freeze date on a bag never frozen, and the time zone would reload on every step through 400 zones; both keep their button. Neither does the admin's merge, which is destructive, nor the selects inside the bag form, which saves as a whole.
 - 2026-10-13: The page's theme reaches the layout through a per-request `AsyncLocalStorage` set by the session middleware, rather than a prop on each of the 30-odd pages. Signed-out pages follow the system.
 
 ## Surprises
-None yet.
+- 2026-10-13: `.button` sets `display`, which overrode the `hidden` attribute, so the Copy and Print buttons that start hidden for browsers without scripts always showed. The stylesheet now keeps `[hidden]` hidden.
+- 2026-10-13: The library's bag count is all the account's bags, not the filtered ones, so it stays outside the live regions.
 
 ## Validation
 - `pnpm verify` passes, with tests for each part.

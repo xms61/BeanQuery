@@ -6,7 +6,7 @@ import { type RepasteResult, repasteBag } from '../../bag/repaste.js';
 import { readCoffee } from '../../coffee/edit.js';
 import { searchPool, startingPoint } from '../../coffee/search.js';
 import { BagFormFields, bagToForm, FormErrors, type FormValues, formToBag, formToEdit, readForm } from '../bag-form.js';
-import { AddTabs } from '../components.js';
+import { AddTabs, LiveRegion } from '../components.js';
 import { type Env, requireAccount, todayFor } from '../context.js';
 import { origin, processLabel } from '../format.js';
 import { AppPage } from '../layout.js';
@@ -69,60 +69,62 @@ editRoutes.get('/add/pool', (c) => {
         <h1>Add bag</h1>
       </div>
       <AddTabs current="pool" />
-      <form method="get" action="/add/pool" class="filters">
+      <form class="filters" method="get" action="/add/pool" data-live>
         <input name="q" value={query} placeholder="Find a coffee in the pool" aria-label="Find a coffee" />
         <button class="button secondary" type="submit">
           Search
         </button>
         <span class="muted small">The bean facts come from the pool; you add your own bag.</span>
       </form>
-      {shown.length === 0 ? (
-        <section class="card">
-          <p class="muted">{query === '' ? 'The pool is empty so far.' : 'No coffee matches.'}</p>
-        </section>
-      ) : (
-        <section class="card table-card">
-          <table class="library">
-            <thead>
-              <tr>
-                <th>Coffee</th>
-                <th>Origin</th>
-                <th>Process</th>
-                <th>Harvests</th>
-                <th>
-                  <span class="visually-hidden">Start</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((coffee) => (
+      <LiveRegion name="results">
+        {shown.length === 0 ? (
+          <section class="card">
+            <p class="muted">{query === '' ? 'The pool is empty so far.' : 'No coffee matches.'}</p>
+          </section>
+        ) : (
+          <section class="card table-card">
+            <table class="library">
+              <thead>
                 <tr>
-                  <td>
-                    <strong>{coffee.name}</strong>
-                    <div class="muted small">
-                      {coffee.roaster}
-                      {coffee.private ? ' · your private coffee' : ''}
-                    </div>
-                  </td>
-                  <td>{origin(coffee.country, coffee.region)}</td>
-                  <td>{coffee.process === null ? '' : processLabel(coffee.process)}</td>
-                  <td class="muted">{coffee.harvests.join(', ') || 'Not listed'}</td>
-                  <td>
-                    <a class="button secondary" href={`/add/manual?from=${coffee.coffeeId}`}>
-                      Start a bag
-                    </a>
-                  </td>
+                  <th>Coffee</th>
+                  <th>Origin</th>
+                  <th>Process</th>
+                  <th>Harvests</th>
+                  <th>
+                    <span class="visually-hidden">Start</span>
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      )}
-      {coffees.length > shown.length && (
-        <p class="muted small">
-          Showing {shown.length} of {coffees.length}. Search to narrow the list.
-        </p>
-      )}
+              </thead>
+              <tbody>
+                {shown.map((coffee) => (
+                  <tr>
+                    <td>
+                      <strong>{coffee.name}</strong>
+                      <div class="muted small">
+                        {coffee.roaster}
+                        {coffee.private ? ' · your private coffee' : ''}
+                      </div>
+                    </td>
+                    <td>{origin(coffee.country, coffee.region)}</td>
+                    <td>{coffee.process === null ? '' : processLabel(coffee.process)}</td>
+                    <td class="muted">{coffee.harvests.join(', ') || 'Not listed'}</td>
+                    <td>
+                      <a class="button secondary" href={`/add/manual?from=${coffee.coffeeId}`}>
+                        Start a bag
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
+        {coffees.length > shown.length && (
+          <p class="muted small">
+            Showing {shown.length} of {coffees.length}. Search to narrow the list.
+          </p>
+        )}
+      </LiveRegion>
       <div class="callout">
         <strong>Your private beans show here too, only to you.</strong>
         <p class="muted small">Starting from one of your private coffees keeps the new bag private.</p>

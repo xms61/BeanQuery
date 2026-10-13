@@ -20,6 +20,7 @@ import {
 import type { ContractError } from '../../contract/bag-json.js';
 import { findRoasters, type Roaster } from '../../roaster/registry.js';
 import { CoffeeFormFields, coffeeToForm, FormErrors, type FormValues, formToBag, readForm } from '../bag-form.js';
+import { LiveRegion } from '../components.js';
 import { type Env, requireAccount } from '../context.js';
 import { fullDate, longDate } from '../format.js';
 import { AppPage } from '../layout.js';
@@ -121,52 +122,54 @@ adminRoutes.get('/admin/coffees', (c) => {
   if (!('coffees' in result)) return c.notFound();
   return c.html(
     <AdminPage c={c} tab="coffees">
-      <form class="filters" method="get" action="/admin/coffees">
+      <form class="filters" method="get" action="/admin/coffees" data-live>
         <input name="q" value={query} placeholder="Find a pool coffee" aria-label="Find a pool coffee" />
         <button class="button secondary" type="submit">
           Search
         </button>
       </form>
-      {result.coffees.length === 0 ? (
-        <section class="card">
-          <p class="muted">No pool coffee matches.</p>
-        </section>
-      ) : (
-        <section class="card table-card">
-          <table class="library">
-            <thead>
-              <tr>
-                <th>Coffee</th>
-                <th>Bags</th>
-                <th>Edits</th>
-                <th>Last edit</th>
-              </tr>
-            </thead>
-            <tbody>
-              {result.coffees.map((coffee) => (
+      <LiveRegion name="results">
+        {result.coffees.length === 0 ? (
+          <section class="card">
+            <p class="muted">No pool coffee matches.</p>
+          </section>
+        ) : (
+          <section class="card table-card">
+            <table class="library">
+              <thead>
                 <tr>
-                  <td>
-                    <a class="coffee" href={`/admin/coffees/${coffee.coffeeId}`}>
-                      {coffee.name}
-                    </a>
-                    <div class="muted small">{coffee.roaster}</div>
-                  </td>
-                  <td>{coffee.bags}</td>
-                  <td>{coffee.edits}</td>
-                  <td class={coffee.lastEdit === null ? 'muted' : undefined}>
-                    {coffee.lastEdit === null ? 'Never' : longDate(coffee.lastEdit)}
-                  </td>
+                  <th>Coffee</th>
+                  <th>Bags</th>
+                  <th>Edits</th>
+                  <th>Last edit</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      )}
-      {result.total > result.coffees.length && (
-        <p class="muted small">
-          Showing {result.coffees.length} of {result.total}. Search to narrow the list.
-        </p>
-      )}
+              </thead>
+              <tbody>
+                {result.coffees.map((coffee) => (
+                  <tr>
+                    <td>
+                      <a class="coffee" href={`/admin/coffees/${coffee.coffeeId}`}>
+                        {coffee.name}
+                      </a>
+                      <div class="muted small">{coffee.roaster}</div>
+                    </td>
+                    <td>{coffee.bags}</td>
+                    <td>{coffee.edits}</td>
+                    <td class={coffee.lastEdit === null ? 'muted' : undefined}>
+                      {coffee.lastEdit === null ? 'Never' : longDate(coffee.lastEdit)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
+        {result.total > result.coffees.length && (
+          <p class="muted small">
+            Showing {result.coffees.length} of {result.total}. Search to narrow the list.
+          </p>
+        )}
+      </LiveRegion>
     </AdminPage>,
   );
 });

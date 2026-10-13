@@ -2,7 +2,7 @@ import { type Context, Hono } from 'hono';
 import { deleteGrinder, editGrinder, listGrinders } from '../../bag/gear.js';
 import { browsePool, coffeePage, type PoolFilter } from '../../coffee/search.js';
 import { listRoasters, type RoasterFilter, type RoasterRow, roasterFor, setRoasterNote } from '../../roaster/notes.js';
-import { RatingBeans } from '../components.js';
+import { LiveRegion, RatingBeans } from '../components.js';
 import { type Env, requireAccount } from '../context.js';
 import { origin, processLabel, shortDate } from '../format.js';
 import { AppPage } from '../layout.js';
@@ -45,7 +45,7 @@ poolRoutes.get('/pool', (c) => {
         <h1>Pool</h1>
         <span class="muted">bean facts shared by every account</span>
       </div>
-      <form class="filters" method="get" action="/pool">
+      <form class="filters" method="get" action="/pool" data-live>
         <input
           name="q"
           value={filter.query ?? ''}
@@ -63,56 +63,58 @@ poolRoutes.get('/pool', (c) => {
           Clear
         </a>
       </form>
-      {shown.length === 0 ? (
-        <section class="card">
-          <p class="muted">No pool coffee matches.</p>
-        </section>
-      ) : (
-        <section class="card table-card">
-          <table class="library">
-            <thead>
-              <tr>
-                <th>Coffee</th>
-                <th>Origin</th>
-                <th>Process</th>
-                <th>Harvests</th>
-                <th>Collective rating</th>
-                <th>
-                  <span class="visually-hidden">Start</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {shown.map((coffee) => (
+      <LiveRegion name="results">
+        {shown.length === 0 ? (
+          <section class="card">
+            <p class="muted">No pool coffee matches.</p>
+          </section>
+        ) : (
+          <section class="card table-card">
+            <table class="library">
+              <thead>
                 <tr>
-                  <td>
-                    <a class="coffee" href={`/pool/${coffee.coffeeId}`}>
-                      {coffee.name}
-                    </a>
-                    <div class="muted small">{coffee.roaster}</div>
-                  </td>
-                  <td>{origin(coffee.country, coffee.region)}</td>
-                  <td>{coffee.process === null ? '' : processLabel(coffee.process)}</td>
-                  <td class="muted">{coffee.harvests.join(', ') || 'Not listed'}</td>
-                  <td>
-                    <Collective rating={coffee.rating} />
-                  </td>
-                  <td>
-                    <a class="button secondary" href={`/add/manual?from=${coffee.coffeeId}`}>
-                      Start a bag
-                    </a>
-                  </td>
+                  <th>Coffee</th>
+                  <th>Origin</th>
+                  <th>Process</th>
+                  <th>Harvests</th>
+                  <th>Collective rating</th>
+                  <th>
+                    <span class="visually-hidden">Start</span>
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      )}
-      {coffees.length > shown.length && (
-        <p class="muted small">
-          Showing {shown.length} of {coffees.length}. Search or filter to narrow the list.
-        </p>
-      )}
+              </thead>
+              <tbody>
+                {shown.map((coffee) => (
+                  <tr>
+                    <td>
+                      <a class="coffee" href={`/pool/${coffee.coffeeId}`}>
+                        {coffee.name}
+                      </a>
+                      <div class="muted small">{coffee.roaster}</div>
+                    </td>
+                    <td>{origin(coffee.country, coffee.region)}</td>
+                    <td>{coffee.process === null ? '' : processLabel(coffee.process)}</td>
+                    <td class="muted">{coffee.harvests.join(', ') || 'Not listed'}</td>
+                    <td>
+                      <Collective rating={coffee.rating} />
+                    </td>
+                    <td>
+                      <a class="button secondary" href={`/add/manual?from=${coffee.coffeeId}`}>
+                        Start a bag
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
+        {coffees.length > shown.length && (
+          <p class="muted small">
+            Showing {shown.length} of {coffees.length}. Search or filter to narrow the list.
+          </p>
+        )}
+      </LiveRegion>
       <p class="muted small">
         The collective rating combines one rating per account, rounded to half a bean, and is rebuilt once a day. It
         stays hidden until 3 accounts have rated a coffee. Private beans never appear here.
@@ -262,24 +264,28 @@ poolRoutes.get('/roasters', (c) => {
         <h1>Roasters</h1>
         <span class="muted">{total === 1 ? '1 roaster' : `${total} roasters`}</span>
       </div>
-      <form class="filters" method="get" action="/roasters">
+      <form class="filters" method="get" action="/roasters" data-live>
         <input name="q" value={query ?? ''} placeholder="Find a roaster" aria-label="Find a roaster" />
         {filter.only && <input type="hidden" name="only" value={filter.only} />}
         <button class="button secondary" type="submit">
           Search
         </button>
       </form>
-      <nav class="tabs" aria-label="Which roasters">
-        {link(undefined, 'All')}
-        {link('bags', 'With my bags')}
-        {link('notes', 'With my notes')}
-      </nav>
-      <RoasterTable roasters={roasters} />
-      {total > roasters.length && (
-        <p class="muted small">
-          Showing {roasters.length} of {total}. Search to find the others.
-        </p>
-      )}
+      <LiveRegion name="tabs">
+        <nav class="tabs" aria-label="Which roasters">
+          {link(undefined, 'All')}
+          {link('bags', 'With my bags')}
+          {link('notes', 'With my notes')}
+        </nav>
+      </LiveRegion>
+      <LiveRegion name="results">
+        <RoasterTable roasters={roasters} />
+        {total > roasters.length && (
+          <p class="muted small">
+            Showing {roasters.length} of {total}. Search to find the others.
+          </p>
+        )}
+      </LiveRegion>
       <p class="muted small">Missing a roaster? Roasters come from every.coffee; ask the admin to add one it lacks.</p>
     </AppPage>,
   );

@@ -329,7 +329,7 @@ function AccountPage(props: { admin: boolean; bags: number; privateBags: number;
             <p class="muted small">
               System follows your device's light or dark setting. Light and Dark apply on every device you sign in on.
             </p>
-            <form method="post" action="/account/theme" class="actions">
+            <form method="post" action="/account/theme" class="actions" data-auto-submit>
               <label class="filter">
                 <span class="visually-hidden">Theme</span>
                 <select name="theme">
