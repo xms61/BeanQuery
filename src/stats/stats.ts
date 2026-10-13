@@ -22,7 +22,10 @@ export interface CountryTally extends Tally {
 }
 
 export interface AltitudeTally extends Tally {
-  /** The band's lower edge in metres: a bag counts by the middle of its altitude range. */
+  /**
+   * The band's lower edge in metres: a bag counts by the middle of its altitude range, or by its printed altitude
+   * when it has no range, such as "+2200m".
+   */
   from: number;
 }
 
@@ -113,6 +116,7 @@ interface BagRow {
   roast: string | null;
   altitudeMin: number | null;
   altitudeMax: number | null;
+  altitudePrinted: string | null;
   roaster: string;
   rating: number | null;
   cents: number | null;
@@ -125,7 +129,7 @@ export function accountStats(db: DatabaseSync, accountId: number): AccountStats 
   const rows = db
     .prepare(
       `SELECT c.country, c.region, c.process_category AS process, b.roast_degree AS roast,
-         c.altitude_min_m AS altitudeMin, c.altitude_max_m AS altitudeMax, r.name AS roaster, b.rating,
+         c.altitude_min_m AS altitudeMin, c.altitude_max_m AS altitudeMax, c.altitude_printed AS altitudePrinted, r.name AS roaster, b.rating,
          b.price_cents AS cents, b.currency, b.weight_g AS grams, b.bought_on AS boughtOn,
          (SELECT group_concat(name, '|') FROM (SELECT name FROM coffee_variety WHERE coffee_id = c.id ORDER BY position))
            AS varieties
@@ -159,8 +163,12 @@ export function accountStats(db: DatabaseSync, accountId: number): AccountStats 
       const countryLabel = match.matched.length === 1 ? (match.matched[0] as MapCountry).name : country;
       regions.add(`${nameKey(countryLabel)}|${nameKey(region)}`, row.rating, { label: region, country: countryLabel });
     }
-    if (row.altitudeMin !== null && row.altitudeMax !== null) {
-      const from = Math.floor((row.altitudeMin + row.altitudeMax) / 2 / altitudeStep) * altitudeStep;
+    const altitude =
+      row.altitudeMin !== null && row.altitudeMax !== null
+        ? (row.altitudeMin + row.altitudeMax) / 2
+        : printedAltitude(row.altitudePrinted ?? '');
+    if (altitude !== null) {
+      const from = Math.floor(altitude / altitudeStep) * altitudeStep;
       altitudes.add(String(from), row.rating, { label: `${from} to ${from + altitudeStep} m`, from });
     } else {
       noAltitude++;
@@ -187,6 +195,25 @@ export function accountStats(db: DatabaseSync, accountId: number): AccountStats 
     spending: spending(rows),
     pricedUndated: rows.filter((row) => row.cents !== null && row.currency !== null && row.boughtOn === null).length,
   };
+}
+
+/**
+ * An altitude in metres read from how a bag prints it, for a bag without a range: "+2200m" and "above 1800 masl" are
+ * 2200 and 1800, a range such as "1,800 – 2,000 m" or "1'800 m ü. M." is its middle, and feet are converted. Text
+ * that gives both, such as "1700-1900 m (5,577-6,233 ft)", is read by its metres. Null when it names no plausible
+ * altitude.
+ */
+export function printedAltitude(printed: string): number | null {
+  const hasFeet = /\d\s*(?:ft|feet|′)(?![a-z])/i.test(printed);
+  const hasMetres = /\d\s*(?:m|mts?|masl|msnm|meters?|metres?)(?![a-z])/i.test(printed);
+  const text = hasFeet && hasMetres ? printed.replace(/[\d.,'’  –-]+\s*(?:ft|feet|′)(?![a-z])/gi, ' ') : printed;
+  const feet = hasFeet && !hasMetres;
+  const numbers = [...text.matchAll(/\d{1,3}(?:[.,'’  ]\d{3}(?!\d))+|\d+/g)]
+    .map((match) => Number(match[0].replace(/[.,'’  ]/g, '')) * (feet ? 0.3048 : 1))
+    .filter((metres) => metres >= 100 && metres <= 6000)
+    .slice(0, 2);
+  if (numbers.length === 0) return null;
+  return Math.round(numbers.reduce((sum, metres) => sum + metres, 0) / numbers.length);
 }
 
 const roastOrder = ['light', 'light-medium', 'medium', 'medium-dark', 'dark'];

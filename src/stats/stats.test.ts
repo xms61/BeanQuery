@@ -5,7 +5,7 @@ import { pasteLimits } from '../contract/bag-json.js';
 import { migrate } from '../db/migrate.js';
 import { openDatabase } from '../db.js';
 import { importRoasters } from '../roaster/import.js';
-import { accountStats, matchCountries } from './stats.js';
+import { accountStats, matchCountries, printedAltitude } from './stats.js';
 import { worldMap } from './world-map.data.js';
 import { buildWorldMap, nameKey } from './world-map-build.js';
 
@@ -63,6 +63,28 @@ describe('matching a bag’s country to the map', () => {
   });
 });
 
+describe('a printed altitude', () => {
+  test('counts a lower bound, a single height and the middle of a range, in metres', () => {
+    expect(printedAltitude('+2200m')).toBe(2200);
+    expect(printedAltitude('Above 1800 masl')).toBe(1800);
+    expect(printedAltitude('1600-1700m')).toBe(1650);
+    expect(printedAltitude('1,800 – 2,000 m')).toBe(1900);
+    expect(printedAltitude('1.900 m ü. M.')).toBe(1900);
+    expect(printedAltitude('5000-6000 ft')).toBe(1676);
+    expect(printedAltitude('Not stated')).toBeNull();
+    expect(printedAltitude('Lot 7')).toBeNull();
+    expect(printedAltitude('Lot 7 1800m')).toBe(1800);
+    expect(printedAltitude("1'800 m ü. M.")).toBe(1800);
+    expect(printedAltitude('1’800 m')).toBe(1800);
+    expect(printedAltitude("Farmer's plot, 1800m")).toBe(1800);
+    expect(printedAltitude('1700-1900 m (5,577-6,233 ft)')).toBe(1800);
+    expect(printedAltitude('5,577-6,233 ft (1700-1900 m)')).toBe(1800);
+    expect(printedAltitude('5,200 ft')).toBe(1585);
+    expect(printedAltitude('1.800-2.000 msnm')).toBe(1900);
+    expect(printedAltitude('Approx. 1900m')).toBe(1900);
+  });
+});
+
 describe('an account’s statistics', () => {
   test('count only its own bags, with the average of the rated ones', () => {
     const { db, bag } = withBags();
@@ -91,8 +113,12 @@ describe('an account’s statistics', () => {
       rating: 3.5,
     });
     expect(stats.roasts).toEqual([{ label: 'light', bags: 5, rated: 2, rating: 4 }]);
-    expect(stats.altitudes).toEqual([{ label: '1600 to 1800 m', from: 1600, bags: 2, rated: 2, rating: 4 }]);
-    expect(stats.noAltitude).toBe(3);
+    expect(stats.altitudes).toEqual([
+      { label: '1600 to 1800 m', from: 1600, bags: 2, rated: 2, rating: 4 },
+      // Ethiopia Elto prints "+2200m" with no range.
+      { label: '2200 to 2400 m', from: 2200, bags: 1, rated: 0, rating: null },
+    ]);
+    expect(stats.noAltitude).toBe(2);
     expect(accountStats(db, 3)).toEqual(expect.objectContaining({ bags: 0, countries: [], spending: [] }));
   });
 
