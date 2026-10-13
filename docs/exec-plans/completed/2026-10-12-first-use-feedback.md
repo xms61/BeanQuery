@@ -52,4 +52,19 @@ The owner's first round of feedback from the live app: the bag page's buttons re
 - In the browser: the bag page's buttons, the delete page, a frozen bag's date on its page and in the CSV, and the theme switch in both directions.
 
 ## Outcome
-Filled in when the plan moves to completed/.
+Shipped, 2026-10-13, all five steps:
+- Buttons and delete (#33).
+- The freeze date (#34).
+- The theme switch (#35).
+- Live filters and search (#36).
+- The Stats page, map and tables (#37) and charts (#38).
+
+`pnpm verify` passes, with 423 tests. The browser checks of the Validation section all passed on a local test database:
+- the bag page's buttons;
+- the delete page;
+- a frozen bag's date on its page and in the CSV;
+- the theme switch both ways;
+- the live filters;
+- the Stats page in light and dark.
+
+Not done, by decision (see the Decision log): the bag's state and the time zone still save with a button, since an arrow key on a closed select would post them. No follow-ups are open.
