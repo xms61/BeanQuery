@@ -40,4 +40,46 @@ describe('the stats page', () => {
     expect(html).toContain('€7.20');
     expect(html).toContain('aria-current="page">Stats');
   });
+
+  test('draws its charts with Chart.js, served by the app and loaded on this page only', async () => {
+    const { db, request } = setup();
+    const me = await redeemed(request, db);
+    const bought = ['2026-09-03', '2026-09-20', '2026-10-01'];
+    for (const [index, day] of bought.entries()) {
+      const input = structuredClone(fixture.bags[index]);
+      input.personal = { price: { cents: 2000, currency: 'EUR' }, bought_on: day };
+      if (addBag(db, me.accountId, input).status !== 'saved') throw new Error('Not saved');
+    }
+
+    const html = await (await request('/stats', { cookie: me.cookie })).text();
+    const script =
+      /<script src="(\/assets\/chart\.js\?v=[0-9a-f]{10})" defer=""><\/script><script src="\/assets\/app\.js/.exec(
+        html,
+      );
+    expect(script).not.toBeNull();
+    const charts = [
+      ...html.matchAll(/<div class="chart" hidden="" aria-hidden="true"><canvas data-chart="([^"]+)"/g),
+    ].map((m) => JSON.parse((m[1] as string).replaceAll('&quot;', '"').replaceAll('&amp;', '&')));
+    expect(charts.map((chart) => chart.kind)).toEqual(['rows', 'bars', 'spending']);
+    expect(charts[0]).toEqual({
+      kind: 'rows',
+      labels: expect.arrayContaining(['Mixed Heirloom', 'Caturra']),
+      bags: expect.any(Array),
+      ratings: expect.any(Array),
+    });
+    expect(charts[2]).toEqual({
+      kind: 'spending',
+      currency: 'EUR',
+      labels: [expect.stringMatching(/^Sept? 2026$/), 'Oct 2026'],
+      spent: [40, 20],
+      per100g: expect.any(Array),
+    });
+
+    const library = await request(script?.[1] as string);
+    expect(library.headers.get('cache-control')).toBe('public, max-age=31536000, immutable');
+    const code = await library.text();
+    expect(code).toContain('window.Chart=');
+    expect(code).not.toContain('sourceMappingURL');
+    expect(await (await request('/', { cookie: me.cookie })).text()).not.toContain('/assets/chart.js');
+  });
 });

@@ -9,6 +9,7 @@ import { themeOf } from '../account/theme.js';
 import { isTimeZone } from '../account/time-zone.js';
 import { isAdmin } from '../admin/admin.js';
 import { pingDatabase } from '../ops/health.js';
+import { chartScript } from './assets/charts.js';
 import { fontFiles } from './assets/fonts.js';
 import { appScript, styleSheet } from './assets/style.js';
 import { type Env, type Limits, sessionCookieName, setSessionCookie, type WebConfig, withTheme } from './context.js';
@@ -94,6 +95,12 @@ export function createApp(config: WebConfig): Hono<Env> {
   );
   app.get('/assets/app.js', (c) =>
     c.body(appScript, 200, {
+      'Content-Type': 'text/javascript; charset=utf-8',
+      'Cache-Control': 'public, max-age=31536000, immutable',
+    }),
+  );
+  app.get('/assets/chart.js', (c) =>
+    c.body(chartScript, 200, {
       'Content-Type': 'text/javascript; charset=utf-8',
       'Cache-Control': 'public, max-age=31536000, immutable',
     }),

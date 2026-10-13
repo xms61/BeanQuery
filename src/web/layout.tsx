@@ -5,7 +5,8 @@ import { pageTheme } from './context.js';
 /** The current section of the app, which the sidebar marks. */
 export type Section = 'library' | 'pool' | 'add' | 'roasters' | 'stats' | 'gear' | 'account' | 'admin' | 'impressum';
 
-function Document(props: { title: string; children: Child }) {
+/** `scripts` are extra scripts of the app's own that one page needs, loaded before the app's script. */
+function Document(props: { title: string; scripts?: string[] | undefined; children: Child }) {
   const theme = pageTheme();
   return (
     <html lang="en" data-theme={theme === 'system' ? undefined : theme}>
@@ -14,6 +15,9 @@ function Document(props: { title: string; children: Child }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{`${props.title} · BeanQuery`}</title>
         <link rel="stylesheet" href={`/assets/app.css?v=${assetVersion}`} />
+        {props.scripts?.map((src) => (
+          <script src={src} defer></script>
+        ))}
         <script src={`/assets/app.js?v=${assetVersion}`} defer></script>
       </head>
       <body>{props.children}</body>
@@ -22,10 +26,16 @@ function Document(props: { title: string; children: Child }) {
 }
 
 /** A page inside the app, with the sidebar and the footer. */
-export function AppPage(props: { title: string; section: Section; admin: boolean; children: Child }) {
+export function AppPage(props: {
+  title: string;
+  section: Section;
+  admin: boolean;
+  scripts?: string[];
+  children: Child;
+}) {
   const current = (section: Section) => (props.section === section ? 'page' : undefined);
   return (
-    <Document title={props.title}>
+    <Document title={props.title} scripts={props.scripts}>
       <div class="shell">
         <nav class="side" aria-label="Main">
           <a class="brand" href="/">

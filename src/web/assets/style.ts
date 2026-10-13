@@ -193,6 +193,7 @@ table.stats th { text-align: left; font-size: 13px; font-weight: 500; color: var
 table.stats td { padding: 6px 0; border-top: 1px solid var(--line-default); }
 table.stats .number { text-align: right; padding-left: 16px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 /* The map: countries tried are shaded with the cherry accent by their share of the bags, in four steps. */
+.chart { position: relative; height: 200px; margin: 4px 0 8px; }
 .world-map { display: block; width: 100%; height: auto; margin: 8px 0 12px; }
 .world-map path { fill: var(--bg-sunk); stroke: var(--bg-surface); stroke-width: 0.5; fill-rule: evenodd; }
 .world-map path.m1 { fill: color-mix(in srgb, var(--accent-cherry) 30%, var(--bg-sunk)); }
@@ -329,6 +330,68 @@ for (const form of document.querySelectorAll('form[data-live]')) {
     event.preventDefault();
     apply();
   });
+}
+
+// The stats page's charts, drawn by Chart.js (loaded on that page only) from each canvas's data, in the page's colors.
+if (window.Chart) {
+  const css = getComputedStyle(document.documentElement);
+  const token = (name) => css.getPropertyValue(name).trim();
+  Chart.defaults.font.family = token('--font-text');
+  Chart.defaults.color = token('--ink-muted');
+  Chart.defaults.borderColor = token('--line-default');
+  Chart.defaults.animation = false;
+  Chart.defaults.maintainAspectRatio = false;
+  Chart.defaults.plugins.legend.display = false;
+  const bags = (n) => (n === 1 ? '1 bag' : n + ' bags');
+  const tallyChart = (data) => ({
+    type: 'bar',
+    data: { labels: data.labels, datasets: [{ data: data.bags, backgroundColor: token('--accent-cherry'), borderRadius: 4, maxBarThickness: 48 }] },
+    options: {
+      indexAxis: data.kind === 'rows' ? 'y' : 'x',
+      scales: {
+        [data.kind === 'rows' ? 'x' : 'y']: { beginAtZero: true, ticks: { precision: 0 } },
+        [data.kind === 'rows' ? 'y' : 'x']: { grid: { display: false } },
+      },
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (item) => {
+              const rating = data.ratings[item.dataIndex];
+              return bags(item.raw) + (rating === null ? ', not rated' : ', rated ' + rating.toFixed(1));
+            },
+          },
+        },
+      },
+    },
+  });
+  const spendingChart = (data) => {
+    const money = new Intl.NumberFormat('en-GB', { style: 'currency', currency: data.currency });
+    return {
+      data: {
+        labels: data.labels,
+        datasets: [
+          { type: 'bar', label: 'Spent', data: data.spent, backgroundColor: token('--accent-cherry'), borderRadius: 4, maxBarThickness: 48, yAxisID: 'spent' },
+          { type: 'line', label: 'Per 100 g', data: data.per100g, borderColor: token('--ink-default'), backgroundColor: token('--ink-default'), spanGaps: true, yAxisID: 'per100g' },
+        ],
+      },
+      options: {
+        scales: {
+          spent: { position: 'left', beginAtZero: true, ticks: { callback: (value) => money.format(value) } },
+          per100g: { position: 'right', beginAtZero: true, grid: { display: false }, ticks: { callback: (value) => money.format(value) } },
+          x: { grid: { display: false } },
+        },
+        plugins: {
+          legend: { display: true, position: 'bottom' },
+          tooltip: { callbacks: { label: (item) => item.dataset.label + ': ' + money.format(item.raw) } },
+        },
+      },
+    };
+  };
+  for (const canvas of document.querySelectorAll('canvas[data-chart]')) {
+    const data = JSON.parse(canvas.dataset.chart);
+    canvas.parentElement.hidden = false;
+    new Chart(canvas, data.kind === 'spending' ? spendingChart(data) : tallyChart(data));
+  }
 }
 
 // A select that saves one choice, such as a bag's state or the theme, saves as soon as it changes.
