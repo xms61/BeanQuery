@@ -1,6 +1,6 @@
 ---
 status: draft
-last-verified: 2026-10-12
+last-verified: 2026-10-13
 ---
 
 # Deploy
@@ -8,7 +8,7 @@ last-verified: 2026-10-12
 How BeanQuery gets onto the owner's VPS and stays current. Why it is built this way: [hosting and deploy](design-docs/hosting-and-deploy.md). Commands marked *owner machine* run in the repo on the development machine; the others run on the VPS over SSH as the `deploy` user. Real domains, addresses and folders go in `.env` files and on the VPS, never in this doc.
 
 ## Status
-Deployed. The owner's VPS has served BeanQuery on its domain since 0.1.0 (2026-10-12), behind ysto 1.31.0's Caddy, and the owner has signed in as admin. Still to do from this runbook: the timers (step 7), the [checks after setup](#checks-after-setup) and the first [restore drill](#restore-drill) ([deploy plan](exec-plans/active/2026-10-12-deploy.md)).
+Deployed. The owner's VPS has served BeanQuery on its domain since 0.1.0 (2026-10-12), behind ysto 1.31.0's Caddy. The timers run, the [checks after setup](#checks-after-setup) passed, and the first [restore drill](#restore-drill) passed on 2026-10-13 ([deploy plan](exec-plans/completed/2026-10-12-deploy.md)). Repeat the drill every few months.
 
 ## What runs where
 - **The VPS** is the one that runs ysto, set up by ysto's runbook (its `docs/DEPLOY.md`): Ubuntu with Docker, keys-only SSH, ufw and the Hetzner firewall allowing 22, 80 and 443 only, and unattended security updates. Nothing in that setup changes.
@@ -88,6 +88,7 @@ Run the backup once by hand and check that a file appears: `sudo systemctl start
 - *Owner machine*: `nmap -Pn -p- <domain>` shows only 22, 80 and 443 open.
 - The [restore drill](#restore-drill) passes.
 - After a night, `journalctl -u beanquery-backup -u beanquery-ratings` shows both jobs, and a new backup is in the folder.
+- After the first Monday, `journalctl -u beanquery-roasters` shows the weekly roaster fetch.
 
 ## Routines
 ### Release and update
