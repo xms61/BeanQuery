@@ -19,6 +19,7 @@
     "build": "tsc",
     "roasters:import": "tsc && node dist/roaster/cli.js",
     "contract:schema": "tsc && node dist/contract/write-schema.js",
+    "map:build": "tsc && node dist/stats/world-map-cli.js",
     "admin": "tsc && node dist/account/cli.js",
     "ops": "tsc && node dist/ops/cli.js",
     "test": "vitest run",

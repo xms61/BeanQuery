@@ -18,6 +18,12 @@ export const weekdayDate = (date: string) => format(date, { weekday: 'short', da
 export const longDate = (date: string) => format(date, { weekday: 'long', day: 'numeric', month: 'long' });
 /** "18 October" */
 export const dayMonth = (date: string) => format(date, { day: 'numeric', month: 'long' });
+/** "Sep 2026", from YYYY-MM */
+export const monthLabel = (month: string) => format(`${month}-01`, { month: 'short', year: 'numeric' });
+
+/** An amount in cents of an ISO 4217 currency, as "€18.00" or "CHF 20.00". */
+export const money = (cents: number, currency: string) =>
+  new Intl.NumberFormat('en-GB', { style: 'currency', currency }).format(cents / 100);
 
 /** A day of the plan, as "+19"; day 0 is "day 0". */
 export const dayLabel = (day: number) => (day === 0 ? 'day 0' : `${day > 0 ? '+' : ''}${day}`);

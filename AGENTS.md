@@ -37,6 +37,7 @@ This file is the map, not the manual: it says which doc to read for which task. 
 | Create the first admin, or an invite, on the server | `pnpm admin create-admin --db <file>` (`--another` when admins exist), `pnpm admin create-invite --db <file>` |
 | Back up, restore, or rebuild the collective ratings on the server | `pnpm ops backup --db <file> --dir <folder>`, `pnpm ops restore --db <file> --from <backup>` (app stopped), `pnpm ops rebuild-ratings --db <file>` |
 | Regenerate the bag JSON Schema after changing the contract | `pnpm contract:schema` |
+| Rebuild the stats page's world map from a Natural Earth download | `pnpm map:build --from <ne_110m_admin_0_countries.geojson>`, then `pnpm format` |
 | Tests, all and one file | `pnpm test`, `pnpm vitest run src/db.test.ts` |
 
 ## How to work

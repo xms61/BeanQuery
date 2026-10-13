@@ -18,6 +18,7 @@ const layers: Record<string, 'db' | 'domain' | 'web'> = {
   contract: 'domain',
   ops: 'domain',
   roaster: 'domain',
+  stats: 'domain',
   web: 'web',
 };
 const rank = { db: 0, domain: 1, web: 2 };
