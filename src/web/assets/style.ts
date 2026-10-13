@@ -80,12 +80,17 @@ p { margin: 0 0 12px; }
 .error { color: var(--accent-cherry); }
 
 .shell { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+/* The sidebar stays in view while the page scrolls, so Account is always at the window's bottom left. */
 .side {
   background: var(--bg-sunk);
   padding: 28px 16px 20px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; text-decoration: none; padding: 0 10px 28px; }
 .brand svg { color: var(--accent-cherry); }
