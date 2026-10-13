@@ -1,6 +1,6 @@
 ---
 status: draft
-last-verified: 2026-10-12
+last-verified: 2026-10-13
 ---
 
 # Web framework: Hono, rendering pages on the server
@@ -17,7 +17,7 @@ The owner chose it on 2026-10-12. Step 9 of the [bean tracker plan](../exec-plan
 - **Limits and failures:** bodies over 1 MB are refused before parsing, except an export upload to `/import`, which may be 21 MB. Sign-in allows 10 attempts per quarter hour and invite redemption 5 per hour, per client, counted in memory only. An unexpected error shows a generic page and is logged without the request.
 - **Headers:** `secureHeaders` with a CSP of `'self'` only (no inline scripts or styles), HSTS, and `Cache-Control: no-store` on every page.
 - **Input:** Hono's validator runs the same Zod definitions as the domain layer. The web layer checks only the shape of a request, and the domain enforces the contract.
-- **Assets:** fonts, styles and the script are served from the app itself, so pages load nothing from a third party. Their URLs carry a hash of their content, so they can be cached for a year.
+- **Assets:** fonts, styles and the script are served from the app itself, so pages load nothing from a third party. Their URLs carry a hash of their content, so they can be cached for a year. The stats page alone also loads [Chart.js](https://www.chartjs.org) (MIT), read from its package and served at `/assets/chart.js`. Each chart's data is in its canvas's `data-chart` attribute, escaped by JSX, so no inline script is needed, and each chart's table holds the same numbers for a browser without scripts.
 - **Tests:** Hono apps answer `app.request()` in-process, so route tests need no server and no network.
 
 ## Why

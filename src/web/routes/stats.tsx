@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { type AccountStats, accountStats, type Tally } from '../../stats/stats.js';
 import { worldMap } from '../../stats/world-map.data.js';
+import { chartVersion } from '../assets/charts.js';
 import { type Env, requireAccount } from '../context.js';
 import { money, monthLabel, processLabel } from '../format.js';
 import { AppPage } from '../layout.js';
@@ -13,7 +14,12 @@ statsRoutes.get('/stats', (c) => {
   if (accountId instanceof Response) return accountId;
   const stats = accountStats(c.var.config.db, accountId);
   return c.html(
-    <AppPage title="Stats" section="stats" admin={c.var.admin}>
+    <AppPage
+      title="Stats"
+      section="stats"
+      admin={c.var.admin}
+      scripts={stats.bags === 0 ? [] : [`/assets/chart.js?v=${chartVersion}`]}
+    >
       <div class="page-head">
         <h1>Stats</h1>
         <span class="muted">
@@ -54,15 +60,21 @@ function StatsPage(props: { stats: AccountStats }) {
         <div class="stats-grid">
           <TallyTable
             title="Altitude"
+            chart="bars"
             tallies={stats.altitudes}
             note={stats.noAltitude > 0 ? `${stats.noAltitude} without an altitude` : undefined}
           />
-          <TallyTable title="Varieties" tallies={stats.varieties} />
+          <TallyTable title="Varieties" chart="rows" tallies={stats.varieties} />
           <TallyTable
             title="Processes"
+            chart="bars"
             tallies={stats.processes.map((p) => ({ ...p, label: processLabel(p.label) }))}
           />
-          <TallyTable title="Roast" tallies={stats.roasts.map((r) => ({ ...r, label: processLabel(r.label) }))} />
+          <TallyTable
+            title="Roast"
+            chart="bars"
+            tallies={stats.roasts.map((r) => ({ ...r, label: processLabel(r.label) }))}
+          />
         </div>
       </section>
       <section class="card stats-section">
@@ -106,10 +118,21 @@ function WorldMap(props: { stats: AccountStats }) {
   );
 }
 
-function TallyTable(props: { title: string; tallies: Tally[]; note?: string | undefined }) {
+function TallyTable(props: { title: string; tallies: Tally[]; chart?: 'bars' | 'rows'; note?: string | undefined }) {
+  const charted = props.chart === 'rows' ? props.tallies.slice(0, chartRows) : props.tallies;
   return (
     <div>
       <h3>{props.title}</h3>
+      {props.chart !== undefined && props.tallies.length > 1 && (
+        <Chart
+          data={{
+            kind: props.chart,
+            labels: charted.map((t) => t.label),
+            bags: charted.map((t) => t.bags),
+            ratings: charted.map((t) => t.rating),
+          }}
+        />
+      )}
       {props.tallies.length === 0 ? (
         <p class="muted small">None recorded yet.</p>
       ) : (
@@ -143,9 +166,22 @@ function TallyTable(props: { title: string; tallies: Tally[]; note?: string | un
 
 function Spending(props: { stats: AccountStats }) {
   const { spending, pricedUndated } = props.stats;
+  const currency = mainCurrency(props.stats);
+  const months = spending.filter((month) => month.currency === currency);
   return (
     <div>
       <h3>Spending by month</h3>
+      {months.length > 1 && (
+        <Chart
+          data={{
+            kind: 'spending',
+            currency,
+            labels: months.map((month) => monthLabel(month.month)),
+            spent: months.map((month) => month.cents / 100),
+            per100g: months.map((month) => (month.per100g === null ? null : month.per100g / 100)),
+          }}
+        />
+      )}
       {spending.length === 0 ? (
         <p class="muted small">Add a price and the date bought to a bag to see what you spend.</p>
       ) : (
@@ -183,3 +219,25 @@ function Spending(props: { stats: AccountStats }) {
 
 const bagsLabel = (bags: number) => (bags === 1 ? '1 bag' : `${bags} bags`);
 const ratingLabel = (tally: Tally) => (tally.rating === null ? '' : `, rated ${tally.rating.toFixed(1)} on average`);
+
+/** The varieties chart shows the most common ones; the table below lists them all. */
+const chartRows = 12;
+
+/**
+ * A chart the app's script draws with Chart.js from `data-chart`. It starts hidden, so a browser without scripts
+ * shows only the table below it, which holds the same numbers.
+ */
+function Chart(props: { data: Record<string, unknown> }) {
+  return (
+    <div class="chart" hidden aria-hidden="true">
+      <canvas data-chart={JSON.stringify(props.data)}></canvas>
+    </div>
+  );
+}
+
+/** The currency of most priced bags: the spending chart shows that one, and the table lists every currency. */
+function mainCurrency(stats: AccountStats): string | undefined {
+  const bags = new Map<string, number>();
+  for (const month of stats.spending) bags.set(month.currency, (bags.get(month.currency) ?? 0) + month.bags);
+  return [...bags].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0];
+}
