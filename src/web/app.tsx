@@ -22,6 +22,7 @@ import { editRoutes } from './routes/edit.js';
 import { libraryRoutes } from './routes/library.js';
 import { pageRoutes } from './routes/pages.js';
 import { poolRoutes } from './routes/pool.js';
+import { statsRoutes } from './routes/stats.js';
 
 export function createApp(config: WebConfig): Hono<Env> {
   // Checked here, at start, so a typo stops the server instead of failing every signed-in page later.
@@ -119,6 +120,7 @@ export function createApp(config: WebConfig): Hono<Env> {
   app.route('/', addRoutes);
   app.route('/', editRoutes);
   app.route('/', poolRoutes);
+  app.route('/', statsRoutes);
   app.route('/', adminRoutes);
   app.route('/', pageRoutes);
 

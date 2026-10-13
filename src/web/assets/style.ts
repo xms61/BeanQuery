@@ -184,6 +184,22 @@ input[name='q'] { width: 280px; }
 .bean .fill { fill: var(--ink-default); }
 
 .table-card { padding: 0; overflow-x: auto; }
+
+.stats-section { margin-bottom: 24px; }
+.stats-section h3 { font-size: 15px; line-height: 22px; font-weight: 600; margin: 16px 0 4px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 8px 32px; }
+table.stats { width: 100%; border-collapse: collapse; }
+table.stats th { text-align: left; font-size: 13px; font-weight: 500; color: var(--ink-muted); padding: 6px 0; }
+table.stats td { padding: 6px 0; border-top: 1px solid var(--line-default); }
+table.stats .number { text-align: right; padding-left: 16px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+/* The map: countries tried are shaded with the cherry accent by their share of the bags, in four steps. */
+.world-map { display: block; width: 100%; height: auto; margin: 8px 0 12px; }
+.world-map path { fill: var(--bg-sunk); stroke: var(--bg-surface); stroke-width: 0.5; fill-rule: evenodd; }
+.world-map path.m1 { fill: color-mix(in srgb, var(--accent-cherry) 30%, var(--bg-sunk)); }
+.world-map path.m2 { fill: color-mix(in srgb, var(--accent-cherry) 55%, var(--bg-sunk)); }
+.world-map path.m3 { fill: color-mix(in srgb, var(--accent-cherry) 78%, var(--bg-sunk)); }
+.world-map path.m4 { fill: var(--accent-cherry); }
+.world-map path:hover { stroke: var(--ink-default); stroke-width: 1; }
 table.library { width: 100%; border-collapse: collapse; }
 table.library th { text-align: left; font-size: 13px; font-weight: 500; color: var(--ink-muted); padding: 16px 20px; }
 table.library td { padding: 14px 20px; border-top: 1px solid var(--line-default); vertical-align: middle; }

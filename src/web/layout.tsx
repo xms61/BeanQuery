@@ -3,7 +3,7 @@ import { assetVersion } from './assets/style.js';
 import { pageTheme } from './context.js';
 
 /** The current section of the app, which the sidebar marks. */
-export type Section = 'library' | 'pool' | 'add' | 'roasters' | 'gear' | 'account' | 'admin' | 'impressum';
+export type Section = 'library' | 'pool' | 'add' | 'roasters' | 'stats' | 'gear' | 'account' | 'admin' | 'impressum';
 
 function Document(props: { title: string; children: Child }) {
   const theme = pageTheme();
@@ -42,6 +42,9 @@ export function AppPage(props: { title: string; section: Section; admin: boolean
           </a>
           <a class="nav" href="/roasters" aria-current={current('roasters')}>
             Roasters
+          </a>
+          <a class="nav" href="/stats" aria-current={current('stats')}>
+            Stats
           </a>
           <a class="nav" href="/gear" aria-current={current('gear')}>
             Gear
