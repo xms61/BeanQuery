@@ -1,0 +1,9 @@
+// security-reviewer A08: parseBody's dot and all options turn form fields into nested objects and arrays, so any
+// options at all are refused; the call node also matches parseBody<T>(...).
+language js(typescript, jsx)
+
+JsCallExpression(callee=$callee, arguments=$arguments) as $call where {
+  $callee <: `$_.parseBody`,
+  $arguments <: not `()`,
+  register_diagnostic(span=$call, message="parseBody's options (dot, all) build nested objects and arrays from form input (security-reviewer A08). Read flat fields; if a route needs them, validate the shape with Zod and add a biome-ignore with the reason.")
+}

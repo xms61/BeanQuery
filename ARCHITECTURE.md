@@ -24,7 +24,7 @@ BeanQuery is a TypeScript app on Node 26 that keeps its data in one SQLite file 
 | `src/stats/` | One account's statistics over its own bags (origins, beans, roasters, spending), matching a bag's country to the world map, and `pnpm map:build`, which makes the map from Natural Earth's country shapes |
 | `src/ops/` | The server's jobs and the restore: an online backup of the database with rotation, a checked restore, the collective-rating rebuild as `pnpm ops`, and the query behind `/healthz` |
 | `Dockerfile`, `deploy/` | The deploy image and the VPS's compose file, Caddy site, settings and the jobs' systemd timers ([DEPLOY.md](docs/DEPLOY.md), [hosting and deploy](docs/design-docs/hosting-and-deploy.md)) |
-| `scripts/` | Repo tooling: the doc and tracked-file checks, the agent guard hook, setup |
+| `scripts/` | Repo tooling: the doc and tracked-file checks, the Biome plugin rules, the agent guard hook, setup |
 | `docs/` | The system of record ([KNOWLEDGE_BASE.md](docs/KNOWLEDGE_BASE.md)) |
 
 ## Layers

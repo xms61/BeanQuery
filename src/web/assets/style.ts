@@ -12,19 +12,21 @@ const darkTokens = `
   --ink-muted: #A99F94;
   --ink-faint: #6E655D;
   --ink-inverse: #1B1613;
-  --accent-cherry: #E0505A;
+  --accent-cherry: #E35F68;
   --phase-resting: #8E98A8;
   --phase-resting-bg: #2B3038;
   --phase-rested: #D9A53A;
+  --phase-rested-ink: #D9A53A;
   --phase-peak: #6FA374;
   --phase-peak-bg: #1F3322;
-  --phase-past: #C07A5C;
+  --phase-past: #C48265;
   --phase-past-bg: #3A241B;
   --freeze-default: #6FA0C6;`;
 
 /**
  * The app's stylesheet, served at /assets/app.css. The color tokens are the Figma variables ("BeanQuery color" and
- * "BeanQuery color dark"), so a screen here and its design use the same names. The fonts are served by the app
+ * "BeanQuery color dark"), so a screen here and its design use the same names. Some values were since changed to meet
+ * WCAG AA contrast for text (style.test.ts checks every text pair), so the code, not Figma, holds the values. Amber text uses --phase-rested-ink, darker than the --phase-rested of the plan bar and borders. The fonts are served by the app
  * (fonts.ts); text in other scripts falls back to the system's fonts.
  */
 export const styleSheet = `
@@ -42,14 +44,15 @@ ${fontFaces}
   --ink-faint: #9A9188;
   --ink-inverse: #FAFBF7;
   --accent-cherry: #B4232F;
-  --phase-resting: #7D8796;
+  --phase-resting: #5D6673;
   --phase-resting-bg: #E2E6EA;
   --phase-rested: #C9952A;
+  --phase-rested-ink: #81601B;
   --phase-peak: #3F7246;
   --phase-peak-bg: #DCE9DA;
   --phase-past: #8A4B32;
   --phase-past-bg: #F2DFD5;
-  --freeze-default: #4D7EA3;
+  --freeze-default: #49779A;
   --font-text: 'Familjen Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-code: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 }
@@ -120,7 +123,7 @@ footer a { font-weight: 500; text-decoration: none; }
 }
 .button.secondary { background: transparent; color: var(--ink-default); border-color: var(--line-strong); }
 .button.quiet { background: transparent; color: var(--ink-muted); border-color: transparent; }
-.button.danger { background: var(--accent-cherry); border-color: var(--accent-cherry); color: #FFF; }
+.button.danger { background: var(--accent-cherry); border-color: var(--accent-cherry); color: var(--ink-inverse); }
 form.inline { display: inline; }
 
 label.field { display: grid; gap: 6px; margin-bottom: 16px; font-size: 13px; color: var(--ink-muted); font-weight: 500; }
@@ -145,6 +148,10 @@ input.wide { width: 100%; }
 
 [hidden] { display: none !important; }
 [data-live-region] { display: contents; }
+/* Shown at the top left only while it has the keyboard focus. */
+.skip-link { position: absolute; top: 8px; left: 8px; z-index: 10; padding: 8px 14px; border-radius: 8px; background: var(--ink-default); color: var(--ink-inverse); font-weight: 600; text-decoration: none; }
+.skip-link:not(:focus) { width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+main:focus { outline: none; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .display { font-size: 44px; line-height: 48px; letter-spacing: -1.5px; }
 .crumbs { margin-bottom: 20px; }
@@ -167,7 +174,7 @@ input[name='q'] { width: 280px; }
 .pill.quiet { background: var(--bg-sunk); color: var(--ink-muted); font-size: 12px; }
 .pill.quiet::before { display: none; }
 .phase-resting, .phase-no_roast_date, .phase-no_plan { background: var(--phase-resting-bg); color: var(--phase-resting); }
-.phase-rested { background: var(--phase-resting-bg); color: var(--phase-rested); }
+.phase-rested { background: var(--phase-resting-bg); color: var(--phase-rested-ink); }
 .phase-peak { background: var(--phase-peak-bg); color: var(--phase-peak); }
 .phase-past { background: var(--phase-past-bg); color: var(--phase-past); }
 
@@ -227,7 +234,7 @@ table.events a { text-decoration: none; }
 .plan-columns { display: grid; grid-template-columns: repeat(5, 1fr); margin: 16px 0; border-bottom: 1px solid var(--line-default); }
 .plan-columns > div { display: grid; gap: 2px; padding: 12px 16px 16px 0; }
 .plan-columns > div + div { border-left: 1px solid var(--line-default); padding-left: 16px; }
-.ink-rested { color: var(--phase-rested); }
+.ink-rested { color: var(--phase-rested-ink); }
 .ink-portion { color: var(--freeze-default); }
 .ink-peak { color: var(--phase-peak); }
 .three { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 24px; align-items: start; }

@@ -1,6 +1,6 @@
 ---
 status: draft
-last-verified: 2026-10-07
+last-verified: 2026-10-14
 ---
 
 # Code style
@@ -19,6 +19,7 @@ How code in this repo is written. A rule a tool can check belongs in the linter 
 ## Stack
 - TypeScript 7 in strict mode on Node 26, as ES modules ([tsconfig.json](../tsconfig.json)). Relative imports end in `.js`, as `nodenext` module resolution requires, even though the file is `.ts`.
 - Biome lints and formats everything ([biome.json](../biome.json)): 2-space indents, single quotes, 120-column lines. `pnpm format` fixes what it can.
+- Rules of our own are Biome GritQL plugins in [scripts/biome-plugins/](../scripts/biome-plugins/), each tested in its `plugins.test.mjs`. They turn items of the [security reviewer's checklist](../.claude/agents/security-reviewer.md) into failing checks: no `raw()` (also refused as an import from Hono under any name, by `noRestrictedImports`), `isEscaped` or `dangerouslySetInnerHTML`; no inline `style=` or `on*=` attributes; no `Math.random`; no Zod schema that keeps unknown keys; and no `parseBody` options. A plugin's `includes` starts with `**/` (`**/src/**`); Biome 2.5 matches nothing with a bare `src/**`. A `biome-ignore lint/plugin` comment needs a reason that a reviewer accepts.
 - Prefer Node built-ins over packages when they do the job, for example `node:sqlite` for the database.
 - SQL table and column names are `snake_case` and singular (`bean`, `roaster_id`); TypeScript names follow the usual camelCase and PascalCase.
 
