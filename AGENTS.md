@@ -1,6 +1,6 @@
 # BeanQuery
 
-A personal coffee bean database: it records the coffees its owner buys, with their details (roaster, roast, water, variety, altitude and more) and ratings. TypeScript on Node 26 with SQLite; it will run as a web app on a Hetzner server.
+An invite-only coffee log for a few friends. Each anonymous account records the coffee bags it buys, with their details (roaster, roast, water, variety, altitude and more), a rest-and-freeze plan and ratings. The bags stay private, while the bean facts are shared in a common pool. TypeScript on Node 26 with SQLite, running as a web app on the owner's Hetzner server.
 
 This file is the map, not the manual: it says which doc to read for which task. The repository is the system of record; what is not written in the repo does not exist for the next session. Read only the docs your task needs.
 
