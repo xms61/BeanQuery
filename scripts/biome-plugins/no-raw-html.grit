@@ -1,0 +1,13 @@
+// security-reviewer A05: Hono JSX escapes children and attributes; these skip it. A renamed import of raw is caught
+// by noRestrictedImports in biome.json, since a call under another name can't be told apart here.
+language js(typescript, jsx)
+
+or {
+  `raw($_)`,
+  `$_.raw($_)`,
+  `isEscaped: $_`,
+  `$_.isEscaped = $_`,
+  JsxAttribute(name=`dangerouslySetInnerHTML`)
+} as $unescaped where {
+  register_diagnostic(span=$unescaped, message="raw(), isEscaped and dangerouslySetInnerHTML skip JSX escaping (security-reviewer A05). Render the value as a JSX child or attribute, which Hono escapes.")
+}
