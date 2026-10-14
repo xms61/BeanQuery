@@ -300,3 +300,22 @@ describe('the app’s settings', () => {
     expect(() => setup({ defaultTimeZone: 'Europe/Berlín' })).toThrow(/DEFAULT_TIME_ZONE/);
   });
 });
+
+describe('the skip link', () => {
+  test('is the first link on every app page and jumps to the main content', async () => {
+    const { request, db } = setup();
+    const { cookie } = await redeemed(request, db);
+    for (const path of ['/', '/pool', '/add', '/stats', '/account']) {
+      const html = await (await request(path, { cookie })).text();
+      const firstLink = /<a [^>]*>[^<]*/.exec(html.slice(html.indexOf('<body>')))?.[0];
+      expect([path, firstLink]).toEqual([path, '<a class="skip-link" href="#main">Skip to content']);
+      expect([path, html.includes('<main id="main" tabindex="-1">')]).toEqual([path, true]);
+    }
+  });
+
+  test('is hidden until it has the keyboard focus', async () => {
+    const css = await (await setup().request('/assets/app.css')).text();
+    expect(css).toMatch(/\.skip-link \{[^}]*position: absolute[^}]*\}/);
+    expect(css).toMatch(/\.skip-link:not\(:focus\)[^{]*\{[^}]*clip-path: inset\(50%\)/);
+  });
+});

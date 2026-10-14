@@ -36,6 +36,10 @@ export function AppPage(props: {
   const current = (section: Section) => (props.section === section ? 'page' : undefined);
   return (
     <Document title={props.title} scripts={props.scripts}>
+      {/* First on the page, so a keyboard user skips the sidebar's links with one Tab and Enter. */}
+      <a class="skip-link" href="#main">
+        Skip to content
+      </a>
       <div class="shell">
         <nav class="side" aria-label="Main">
           <a class="brand" href="/">
@@ -68,7 +72,7 @@ export function AppPage(props: {
             Account
           </a>
         </nav>
-        <main>
+        <main id="main" tabindex={-1}>
           {props.children}
           <footer class="small">
             <a href="/impressum">Impressum</a>
