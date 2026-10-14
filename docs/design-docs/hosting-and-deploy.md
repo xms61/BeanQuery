@@ -1,12 +1,12 @@
 ---
 status: draft
-last-verified: 2026-10-12
+last-verified: 2026-10-13
 ---
 
 # Hosting and deploy
 
 ## Context
-BeanQuery runs for invited users on the owner's Hetzner VPS, which already runs the owner's ysto game behind Caddy. The repo is public, so its CI must hold no credentials for the server. The data is one SQLite file ([storage choice](storage-choice.md)). The runbook is [DEPLOY.md](../DEPLOY.md). The plan and its decisions are in the [deploy plan](../exec-plans/active/2026-10-12-deploy.md).
+BeanQuery runs for invited users on the owner's Hetzner VPS, which already runs the owner's ysto game behind Caddy. The repo is public, so its CI must hold no credentials for the server. The data is one SQLite file ([storage choice](storage-choice.md)). The runbook is [DEPLOY.md](../DEPLOY.md). The plan and its decisions are in the [deploy plan](../exec-plans/completed/2026-10-12-deploy.md).
 
 ## Decision
 **The image.** The [Dockerfile](../../Dockerfile) follows ysto's:
