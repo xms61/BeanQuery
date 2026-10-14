@@ -145,6 +145,10 @@ input.wide { width: 100%; }
 
 [hidden] { display: none !important; }
 [data-live-region] { display: contents; }
+/* Shown at the top left only while it has the keyboard focus. */
+.skip-link { position: absolute; top: 8px; left: 8px; z-index: 10; padding: 8px 14px; border-radius: 8px; background: var(--ink-default); color: var(--ink-inverse); font-weight: 600; text-decoration: none; }
+.skip-link:not(:focus) { width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+main:focus { outline: none; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .display { font-size: 44px; line-height: 48px; letter-spacing: -1.5px; }
 .crumbs { margin-bottom: 20px; }
