@@ -1,0 +1,12 @@
+// security-reviewer A08: parsed input never carries keys the schema doesn't name.
+language js(typescript, jsx)
+
+or {
+  `$_.passthrough()`,
+  `$_.loose()`,
+  `$_.catchall($_)`,
+  `$_.looseObject($_)`,
+  `looseObject($_)`
+} as $loose where {
+  register_diagnostic(span=$loose, message="Input schemas strip or refuse unknown keys (security-reviewer A08). Use z.object or z.strictObject, not passthrough, loose, looseObject or catchall.")
+}

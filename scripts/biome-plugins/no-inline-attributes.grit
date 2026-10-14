@@ -1,0 +1,10 @@
+// security-reviewer A02: the content policy allows no inline styles or handlers, so they would need it loosened.
+language js(typescript, jsx)
+
+JsxAttribute(name=$name) as $attribute where {
+  $name <: or {
+    `style`,
+    r"on[a-zA-Z]+"
+  },
+  register_diagnostic(span=$attribute, message="Inline style= and on*= attributes need the content policy loosened (security-reviewer A02). Put the style in src/web/assets/style.ts and the behavior in the app script.")
+}
