@@ -10,7 +10,7 @@ last-verified: 2026-10-14
 - `pnpm verify` runs every check a change must pass, locally and in CI. When it gets slow, add a fast subset for the edit loop; don't drop checks from `verify`.
 - Tests never use the network or real user data. Use in-memory or temp-dir stores and stubs.
 - Quiet on success, specific on failure: a failing test names the case and the expected and actual values. Thousands of lines of passing output bury the one line an agent needs.
-- Never weaken, skip or delete a failing test to get green. If the test is wrong, fix it in its own commit and say why in the PR.
+- Never weaken, skip or delete a failing test to get green. If the test is wrong, fix it in its own commit and say why in the PR. A `.skip` or `.only` fails `pnpm lint`.
 - A behavior that a unit test can't reach (a UI flow, a deploy) gets an end-to-end check the agent can run itself. For the web app that is the [drive-app skill](../.claude/skills/drive-app/SKILL.md): it builds and starts the server on a fresh seeded database under `docs/scratch/`, drives the features its map lists in a browser, and keeps the evidence. Run it for every change to `src/web/` that a user can see, alongside `pnpm verify`, and add a feature file when a change touches an unmapped feature.
 
 ## Stack
@@ -20,4 +20,4 @@ last-verified: 2026-10-14
 - No coverage threshold yet.
 
 ## Repo scripts
-The checks in `scripts/` have their own tests, next to each script as `*.test.mjs`, run by `pnpm test:scripts` (Node's built-in test runner). They build their fixtures in temp directories.
+The checks in `scripts/` have their own tests, next to each script as `*.test.mjs` (the Biome plugins' in `scripts/biome-plugins/plugins.test.mjs`), run by `pnpm test:scripts` (Node's built-in test runner). They build their fixtures in temp directories.

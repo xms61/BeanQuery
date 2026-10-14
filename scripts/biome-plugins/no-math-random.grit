@@ -1,0 +1,7 @@
+// security-reviewer A04: tokens, codes and account numbers come from node:crypto. Matches the member, so passing
+// Math.random along is caught as well as calling it.
+language js(typescript, jsx)
+
+`Math.random` as $random where {
+  register_diagnostic(span=$random, message="Math.random() is predictable (security-reviewer A04). Use randomBytes or randomInt from node:crypto.")
+}

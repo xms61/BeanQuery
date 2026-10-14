@@ -17,9 +17,37 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "preset": "recommended"
+      "preset": "recommended",
+      "style": {
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "hono/html": {
+                "importNames": ["raw"],
+                "message": "raw() skips JSX escaping (security-reviewer A05). Render the value as a JSX child or attribute, which Hono escapes."
+              },
+              "hono/utils/html": {
+                "importNames": ["raw"],
+                "message": "raw() skips JSX escaping (security-reviewer A05). Render the value as a JSX child or attribute, which Hono escapes."
+              }
+            }
+          }
+        }
+      },
+      "suspicious": {
+        "noFocusedTests": "error",
+        "noSkippedTests": "error"
+      }
     }
   },
+  "plugins": [
+    { "path": "./scripts/biome-plugins/no-raw-html.grit", "includes": ["**/src/**"] },
+    { "path": "./scripts/biome-plugins/no-inline-attributes.grit", "includes": ["**/src/**/*.tsx"] },
+    { "path": "./scripts/biome-plugins/no-math-random.grit", "includes": ["**/src/**"] },
+    { "path": "./scripts/biome-plugins/strict-zod.grit", "includes": ["**/src/**"] },
+    { "path": "./scripts/biome-plugins/parse-body-flat.grit", "includes": ["**/src/**"] }
+  ],
   "javascript": {
     "formatter": {
       "quoteStyle": "single"
