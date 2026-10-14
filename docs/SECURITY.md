@@ -1,6 +1,6 @@
 ---
 status: draft
-last-verified: 2026-10-07
+last-verified: 2026-10-14
 ---
 
 # Security
@@ -10,6 +10,18 @@ last-verified: 2026-10-07
 - What keeps them out of git: `.gitignore`; the tracked-files check (`scripts/check-tracked-files.mjs`) in the pre-commit hook and CI; and gitleaks, in the pre-commit hook when it is installed and in CI over every pull request's commits. The tracked-files check also refuses private keys, databases, archives, build output, `docs/scratch/` and files over 1 MiB.
 - What keeps them out of Claude Code's context: the guard hook (`scripts/agent-hooks/guard-tool-use.mjs`) and the deny rules in `.claude/settings.json` ([AGENT_TOOLS.md](AGENT_TOOLS.md)).
 - Committed files never reveal a developer's machine: no home-folder paths, user names or host names. Refer to locations by env var.
+
+## The app
+BeanQuery is open to the internet but only to invited people. It holds each account's private bags, so its rules are:
+- **Untrusted input.** Everything a user sends is untrusted: pastes, uploaded exports, form fields and URLs. So is the every.coffee page an admin imports. A paste or upload is checked against the [bag JSON contract](product-specs/bag-json-contract.md), with its size and bag limits, before anything is saved. Forms are checked by the same Zod definitions. SQL takes values only as `?` parameters. Pages are Hono JSX, which escapes text and attributes, and the content policy allows scripts and styles from the app only, never inline ([web framework](design-docs/web-framework.md)).
+- **Account secrets.** An account number is the only key to an account, so it is treated like a password:
+  - It is shown once, and only its SHA-256 hash is stored, as for session tokens.
+  - It appears in no URL sent to the server, no log and no redirect. The redeem page shows it in its response only, and its download link is a `data:` URL that never leaves the browser.
+  - Sign-in and invite redemption are rate-limited. Sessions use `__Host-` cookies that are `HttpOnly`, `Secure` and `SameSite=Lax`, and every form post is checked by its origin ([account model](design-docs/account-model.md)).
+- **Account boundaries.** Every query of personal data filters by the signed-in account's id, which comes from the session, never from the request. Another account's bag answers 404, the same as a missing one; the route tests check it.
+- **Admin access.** Only `pnpm admin`, run on the server, can make an admin; no web route sets `is_admin`. Each admin tool checks the acting account itself and answers a non-admin with 404. The admin can read the database and its backups; the account page tells users the admin could read the database.
+- **Logs and third parties.** Logs hold no IP addresses and no request bodies. Pages load nothing from another site.
+- **Reviews.** A change to `src/web/`, `src/account/`, `src/admin/`, input parsing, SQL, sessions, headers, dependencies or the server setup also gets the `security-reviewer` agent's review (CLAUDE.md).
 
 ## Coding agents on developer machines
 - Instructions are requests; boundaries are guarantees. Each must-never rule in AGENTS.md has a hook, permission, sandbox limit or check behind it where one is possible.

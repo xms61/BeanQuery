@@ -5,7 +5,7 @@ last-verified: 2026-10-14
 
 # Architecture
 
-BeanQuery is a TypeScript app on Node 26 that keeps its data in one SQLite file ([storage choice](docs/design-docs/storage-choice.md)). It will run as a web app on a Hetzner server; the web framework is not chosen yet. Keep this doc to what a reader can't see quickly from the code: the parts, which way dependencies point, and the rules that hold everywhere.
+BeanQuery is a TypeScript app on Node 26 that keeps its data in one SQLite file ([storage choice](docs/design-docs/storage-choice.md)). It runs as a web app on [Hono](docs/design-docs/web-framework.md) on the owner's Hetzner server, for a few friends with anonymous accounts by invitation ([account model](docs/design-docs/account-model.md)). Each account's bags are private to it; the bean facts are shared in a pool that every account reads and edits. Keep this doc to what a reader can't see quickly from the code: the parts, which way dependencies point, and the rules that hold everywhere.
 
 ## Code map
 | Path | Holds |
@@ -14,7 +14,7 @@ BeanQuery is a TypeScript app on Node 26 that keeps its data in one SQLite file 
 | `src/db.ts` | Opens the SQLite database with foreign keys on |
 | `src/db/migrate.ts` | The schema, as numbered migrations applied once each by `migrate` |
 | `src/account/` | Anonymous accounts: account numbers, invites, sessions, time zones, themes, deleting an account, and `pnpm admin`, the only code that makes admins |
-| `src/admin/` | The owner's tools, each refused to non-admins: invites, the account list and deleting an account, roasters and aliases, and editing, merging, deleting and undoing edits of pool coffees |
+| `src/admin/` | The admin's tools, each refused to non-admins: invites, the account list and deleting an account, roasters and aliases, and editing, merging, deleting and undoing edits of pool coffees |
 | `src/bag/` | One account's bags: import of a pasted or uploaded document, manual entry, edits, re-paste, state, delete, export, the library with phases and filters, the reminders, and the gear: grinders with rename, note and delete |
 | `src/coffee/` | Coffees: the name key and close matches, editing facts, "Use mine" and moving a bag, pool search with the pool page and a coffee's page, the collective rating, and making a bean private or public |
 | `src/contract/` | The bag JSON contract as one Zod definition: validation by field path, and the generated JSON Schema in `docs/generated/` |
