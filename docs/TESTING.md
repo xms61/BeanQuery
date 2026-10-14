@@ -11,7 +11,7 @@ last-verified: 2026-10-14
 - Tests never use the network or real user data. Use in-memory or temp-dir stores and stubs.
 - Quiet on success, specific on failure: a failing test names the case and the expected and actual values. Thousands of lines of passing output bury the one line an agent needs.
 - Never weaken, skip or delete a failing test to get green. If the test is wrong, fix it in its own commit and say why in the PR. A `.skip` or `.only` fails `pnpm lint`.
-- A behavior that a unit test can't reach (a UI flow, a deploy) gets an end-to-end check the agent can run itself, such as a browser test or a screenshot to compare.
+- A behavior that a unit test can't reach (a UI flow, a deploy) gets an end-to-end check the agent can run itself. For the web app that is the [drive-app skill](../.claude/skills/drive-app/SKILL.md): it builds and starts the server on a fresh seeded database under `docs/scratch/`, drives the features its map lists in a browser, and keeps the evidence. Run it for every change to `src/web/` that a user can see, alongside `pnpm verify`, and add a feature file when a change touches an unmapped feature.
 
 ## Stack
 - Vitest ([vitest.config.ts](../vitest.config.ts)) runs `src/**/*.test.ts`. Each test file sits next to the module it tests.

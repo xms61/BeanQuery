@@ -13,5 +13,6 @@ The doc rules are in [docs/KNOWLEDGE_BASE.md](../../../docs/KNOWLEDGE_BASE.md); 
    - The code looks wrong: add a row to the [tech-debt tracker](../../../docs/exec-plans/tech-debt-tracker.md). A gardening pass doesn't change behavior.
    - The doc can't be fixed now: set its status to `stub` so nobody relies on it.
 3. Check that the instructions still earn their place. AGENTS.md stays under 100 lines. Remove rules that no longer prevent a real mistake, workarounds for an older model's limits, and skills or hooks nobody uses.
-4. Move finished exec plans to `docs/exec-plans/completed/`, and delete tech-debt rows that are paid off.
-5. Run `pnpm verify`. Open one PR per area, titled `docs(<area>): <summary>`.
+4. Run the [drive-app](../drive-app/SKILL.md) skill over every feature in its map. A recipe that no longer matches the app while the app works is drift: fix the feature file. An app that no longer does what the map says is a bug: report it, don't rewrite the map around it.
+5. Move finished exec plans to `docs/exec-plans/completed/`, and delete tech-debt rows that are paid off.
+6. Run `pnpm verify`. Open one PR per area, titled `docs(<area>): <summary>`.
